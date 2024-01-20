@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.crypto.jtrade.front.provider.mapper.OrderMapper">
+    
+    <select id="getFinishOrderList" resultType="com.crypto.jtrade.common.model.Order">
+        SELECT *
+        FROM jtrade_trade.t_finish_order
+        WHERE client_id = #{clientId}
+        AND order_time &gt; ${startTime}
+        ORDER BY order_time DESC
+        LIMIT ${limit}
+    </select>
+    
+    <select id="getFinishOrder" resultType="com.crypto.jtrade.common.model.Order">
+        SELECT *
+        FROM jtrade_trade.t_finish_order
+        WHERE client_id = #{clientId}
+        <if test="symbol != null and symbol !=''">
+            AND symbol = #{symbol}
+        </if>
+        <if test="clientOrderId != null and clientOrderId !=''">
+            AND client_order_id = #{clientOrderId}
+        </if>
+        <if test="orderId != null and orderId !=''">
+            AND order_id = ${orderId}
+        </if>
+    </select>
+    
+    <select id="getHistoryOrders" resultType="com.crypto.jtrade.common.model.Order">
+        SELECT *
+        FROM jtrade_trade.t_finish_order
+        WHERE client_id = #{clientId}
+        <if test="symbol != null and symbol !=''">
+            AND symbol = #{symbol}
+        </if>
+        <if test="orderId != null and orderId !=''">
+            AND order_id &gt;= ${orderId}
+        </if>
+        <if test="startTime != null and startTime !=''">
+            AND order_time &gt;= ${startTime}
+        </if>
+        <if test="endTime != null and endTime !=''">
+            AND order_time &lt;= ${endTime}
+        </if>
+        ORDER BY order_time DESC
+        LIMIT ${limit}
+    </select>
+
+</mapper>

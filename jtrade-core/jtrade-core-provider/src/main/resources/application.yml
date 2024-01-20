@@ -1,0 +1,88 @@
+server:
+  port: 9500
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 500
+    max-connections: 2000
+spring:
+  application:
+    name: jtrade-core
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/jtrade_market?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&rewriteBatchedStatements=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: false
+  redis:
+    host: 127.0.0.1
+    password: 123456
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1
+        max-idle: 5
+        min-idle: 2
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.crypto.jtrade.common.model
+  config-location: classpath:mybatis-config.xml
+
+
+jtrade:
+  log:
+    path: ./log
+    level: INFO
+  disruptor:
+    trade-buffer-size: 4096
+    match-buffer-size: 4096
+    public-publish-buffer-size: 8192
+    private-publish-buffer-size: 8192
+    stop-buffer-size: 2048
+    oto-buffer-size: 2048
+    redis-buffer-size: 8192
+    mysql-buffer-size: 8192
+  core:
+    product-type: PERPETUAL
+    market-db-schema: jtrade_market
+    symbol-delimiter: '-'
+    match-engine-size: 2
+    client-cache-size: 4096
+    depth-interval-milli-seconds: 100
+    max-depths: 20
+    redis-landing-interval-milli-seconds: 1000
+    redis-landing-max-batch-size: 100
+    mysql-landing-interval-milli-seconds: 1000
+    mysql-landing-max-batch-size: 100
+    public-publish-interval-milli-seconds: 10000
+    public-publish-max-batch-size: 100
+    private-publish-interval-milli-seconds: 10000
+    private-publish-max-batch-size: 100
+  liquidation:
+    enabled: true
+    calculate-interval-seconds: 5
+    delay-intervals: 2
+  deduct:
+    enabled: true
+    calculate-interval-seconds: 7
+    delay-intervals: 1
+  markPrice:
+    enabled: false
+    calculate-interval-seconds: 3
+  fundingRate:
+    enabled: false

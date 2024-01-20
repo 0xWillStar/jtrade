@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.crypto.jtrade.front.provider.mapper.KlineMapper">
+    
+    <select id="getKlineList" resultType="Kline">
+        SELECT
+        begin_time,
+        end_time,
+        open_price,
+        high_price,
+        low_price,
+        close_price,
+        volume,
+        quote_volume,
+        count
+        FROM ${tableName}
+        WHERE symbol = #{symbol}
+        AND period = #{period}
+        <if test="startTime != null and startTime !=''">
+            AND begin_time &gt;= ${startTime}
+        </if>
+        <if test="endTime != null and endTime !=''">
+            AND begin_time &lt;= ${endTime}
+        </if>
+        ORDER BY begin_time DESC
+        LIMIT ${limit}
+    </select>
+
+</mapper>

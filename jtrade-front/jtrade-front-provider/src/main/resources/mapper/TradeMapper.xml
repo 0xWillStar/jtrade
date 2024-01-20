@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.crypto.jtrade.front.provider.mapper.TradeMapper">
+    
+    <select id="getTradeList" resultType="com.crypto.jtrade.common.model.Trade">
+        SELECT *
+        FROM jtrade_trade.t_trade
+        WHERE symbol = #{symbol}
+        AND match_role = 'TAKER'
+        AND trade_time &gt; ${startTime}
+        ORDER BY trade_time DESC
+        LIMIT ${limit}
+    </select>
+    
+    <select id="getTradeListByClient" resultType="com.crypto.jtrade.common.model.Trade">
+        SELECT *
+        FROM jtrade_trade.t_trade
+        WHERE client_id = #{clientId}
+        AND trade_time &gt; ${startTime}
+        ORDER BY trade_time DESC
+        LIMIT ${limit}
+    </select>
+    
+    <select id="getHistoryTrades" resultType="com.crypto.jtrade.common.model.Trade">
+        SELECT *
+        FROM jtrade_trade.t_trade
+        WHERE client_id = #{clientId}
+        <if test="symbol != null and symbol !=''">
+            AND symbol = #{symbol}
+        </if>
+        <if test="fromId != null and fromId !=''">
+            AND trade_id &gt;= ${fromId}
+        </if>
+        <if test="startTime != null and startTime !=''">
+            AND trade_time &gt;= ${startTime}
+        </if>
+        <if test="endTime != null and endTime !=''">
+            AND trade_time &lt;= ${endTime}
+        </if>
+        ORDER BY trade_time DESC
+        LIMIT ${limit}
+    </select>
+
+</mapper>

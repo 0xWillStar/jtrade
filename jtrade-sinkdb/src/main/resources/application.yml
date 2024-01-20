@@ -1,0 +1,53 @@
+server:
+  port: 9502
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 500
+    max-connections: 2000
+spring:
+  application:
+    name: jtrade-sinkdb
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/jtrade_trade?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&rewriteBatchedStatements=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: false
+  redis:
+    host: 127.0.0.1
+    password: 123456
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1
+        max-idle: 5
+        min-idle: 2
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.crypto.jtrade.sinkdb.model
+  config-location: classpath:mybatis-config.xml
+
+jtrade:
+  log:
+    path: ./log
+    level: INFO
+  disruptor:
+    worker-buffer-size: 8192
+  sink:
+    worker-count: 3

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.crypto.jtrade.core.provider.mapper.KlineMapper">
+    
+    <select id="getFirstKlineTime" resultType="Long">
+        SELECT MIN(begin_time)
+        FROM ${tableName}
+        WHERE symbol = #{symbol}
+        AND period = #{period}
+    </select>
+    
+    <select id="getLastKlineTime" resultType="Long">
+        SELECT MAX(begin_time)
+        FROM ${tableName}
+        WHERE symbol = #{symbol}
+          AND period = #{period}
+    </select>
+    
+    <select id="getKline" resultType="Kline">
+        SELECT
+            open_price,
+            high_price,
+            low_price,
+            close_price,
+            volume,
+            quote_volume,
+            count
+        FROM ${tableName}
+        WHERE symbol = #{symbol}
+          AND period = #{period}
+          AND begin_time = #{beginTime}
+    </select>
+    
+    <select id="statKline" resultType="Kline">
+        SELECT
+            MAX(CASE WHEN openPriceRank = 1 THEN open_price ELSE 0 END) openPrice,
+            MAX(high_price) highPrice,
+            MIN(low_price) lowPrice,
+            MAX(CASE WHEN closePriceRank = 1 THEN close_price ELSE 0 END) closePrice,
+            SUM(volume) volume,
+            SUM(quote_volume) quoteVolume,
+            SUM(count) count
+        FROM
+        (
+            SELECT
+                open_price,
+                high_price,
+                low_price,
+                close_price,
+                volume,
+                quote_volume,
+                count,
+                ROW_NUMBER() OVER (ORDER BY begin_time) openPriceRank,
+                ROW_NUMBER() OVER (ORDER BY begin_time DESC) closePriceRank
+            FROM ${tableName}
+            WHERE symbol = #{symbol}
+            AND period = #{period}
+            AND begin_time BETWEEN ${firstTime} AND ${lastTime}
+            AND count > 0
+        ) T
+    </select>
+    
+    <insert id="addKline" parameterType="Kline">
+        INSERT INTO ${tableName}
+        (
+            symbol,
+            period,
+            begin_time,
+            end_time,
+            open_price,
+            high_price,
+            low_price,
+            close_price,
+            volume,
+            quote_volume,
+            count
+        )
+        VALUES
+        (
+            #{symbol},
+            #{period},
+            #{beginTime},
+            #{endTime},
+            #{openPrice},
+            #{highPrice},
+            #{lowPrice},
+            #{closePrice},
+            #{volume},
+            #{quoteVolume},
+            #{count}
+        )
+    </insert>
+    
+    <select id="getKlineList" resultType="Kline">
+        SELECT
+            begin_time,
+            end_time,
+            open_price,
+            high_price,
+            low_price,
+            close_price,
+            volume,
+            quote_volume,
+            count
+        FROM ${tableName}
+        WHERE symbol = #{symbol}
+          AND period = #{period}
+          AND begin_time BETWEEN ${beginTime} AND ${endTime}
+        ORDER BY begin_time
+    </select>
+
+</mapper>

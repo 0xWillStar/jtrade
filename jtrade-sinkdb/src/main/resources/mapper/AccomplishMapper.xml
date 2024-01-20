@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.crypto.jtrade.sinkdb.mapper.AccomplishMapper">
+    
+    <select id="getAccomplishes" resultType="Accomplish">
+        SELECT
+        worker_id,
+        batch_id
+        FROM t_accomplish
+    </select>
+    
+    <insert id="addAccomplish" parameterType="Accomplish">
+        INSERT INTO t_accomplish
+        (
+        worker_id,
+        batch_id
+        )
+        VALUES
+        (
+        #{workerId},
+        #{batchId}
+        )
+    </insert>
+
+</mapper>

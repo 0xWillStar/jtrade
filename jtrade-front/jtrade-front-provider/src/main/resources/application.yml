@@ -1,0 +1,78 @@
+server:
+  port: 9501
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 500
+    max-connections: 2000
+spring:
+  application:
+    name: jtrade-front
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/jtrade_trade?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&rewriteBatchedStatements=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: false
+  redis:
+    host: 127.0.0.1
+    password: 123456
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1
+        max-idle: 5
+        min-idle: 2
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.crypto.jtrade.common.model
+  config-location: classpath:mybatis-config.xml
+
+jtrade:
+  log:
+    path: ./log
+    level: INFO
+  disruptor:
+    stream-worker-buffer-size: 4096
+  front:
+    name: Star
+    default-asset: USDC
+    market-db-schema: jtrade_market
+    symbol-delimiter: '-'
+    
+    ping-interval-seconds: 60
+    flush-interval-milli-seconds: 100
+
+    public-queue: jtrade.queue.push.public
+    public-websocket-port: 9505
+    public-stream-worker-size: 3
+
+    private-queue: jtrade.queue.push.private
+    private-websocket-port: 9506
+    private-stream-worker-size: 3
+
+    kline-default-size: 200
+    trade-default-size: 100
+    trade-default-hours: 1
+    client-history-default-size: 100
+    client-history-default-days: 180
+
+    api-key-timeout-minutes: 240
+
+  remote:
+    trade-core-server-url: http://127.0.0.1:9500
