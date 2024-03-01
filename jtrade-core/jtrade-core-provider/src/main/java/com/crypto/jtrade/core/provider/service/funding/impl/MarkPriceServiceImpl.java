@@ -12,7 +12,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.PostConstruct;
 
-import com.crypto.jtrade.core.provider.service.publish.PublicPublish;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,7 +32,8 @@ import com.crypto.jtrade.core.provider.model.landing.RedisOperation;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.cache.RedisService;
 import com.crypto.jtrade.core.provider.service.funding.MarkPriceService;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
+import com.crypto.jtrade.core.provider.service.publish.PublicPublish;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -70,7 +70,7 @@ public class MarkPriceServiceImpl implements MarkPriceService {
     private LocalCacheService localCache;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     @Autowired
     private PublicPublish publicPublish;
@@ -214,7 +214,7 @@ public class MarkPriceServiceImpl implements MarkPriceService {
                 /**
                  * set mark price to trade service
                  */
-                tradeService.setMarkPrice(markPriceList);
+                tradeCommand.setMarkPrice(markPriceList);
             }
             // save to redis
             if (!CollectionUtils.isEmpty(operationList)) {

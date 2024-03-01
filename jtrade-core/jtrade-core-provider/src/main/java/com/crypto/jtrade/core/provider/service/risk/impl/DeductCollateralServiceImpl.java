@@ -5,9 +5,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
-import com.crypto.jtrade.core.provider.service.cache.ClientEntity;
-import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,7 +14,10 @@ import com.crypto.jtrade.common.constants.SystemParameter;
 import com.crypto.jtrade.common.model.AssetBalance;
 import com.crypto.jtrade.common.util.TimerManager;
 import com.crypto.jtrade.common.util.Utils;
+import com.crypto.jtrade.core.provider.service.cache.ClientEntity;
+import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.risk.DeductCollateralService;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,7 +41,7 @@ public class DeductCollateralServiceImpl implements DeductCollateralService {
     private LocalCacheService localCache;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     @PostConstruct
     public void init() {
@@ -66,7 +66,7 @@ public class DeductCollateralServiceImpl implements DeductCollateralService {
         try {
             for (String clientId : localCache.getDebtClientIds()) {
                 if (checkDeduct(clientId)) {
-                    tradeService.deductCollateralAssets(clientId);
+                    tradeCommand.deductCollateralAssets(clientId);
                 }
             }
         } catch (Exception e) {

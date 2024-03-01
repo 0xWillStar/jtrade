@@ -4,9 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -24,41 +21,14 @@ import com.crypto.jtrade.common.constants.OrderType;
 import com.crypto.jtrade.common.constants.SymbolStatus;
 import com.crypto.jtrade.common.exception.TradeError;
 import com.crypto.jtrade.common.exception.TradeException;
-import com.crypto.jtrade.common.model.AssetInfo;
-import com.crypto.jtrade.common.model.BaseResponse;
-import com.crypto.jtrade.common.model.FeeRate;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.SymbolIndicator;
-import com.crypto.jtrade.common.model.SymbolInfo;
-import com.crypto.jtrade.common.model.TradeAuthority;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.DisruptorBuilder;
 import com.crypto.jtrade.common.util.NamedThreadFactory;
 import com.crypto.jtrade.common.util.ResponseHelper;
 import com.crypto.jtrade.common.util.Utils;
-import com.crypto.jtrade.core.api.model.AdjustPositionMarginRequest;
-import com.crypto.jtrade.core.api.model.AssetInfoRequest;
-import com.crypto.jtrade.core.api.model.CancelOrderRequest;
-import com.crypto.jtrade.core.api.model.ClientFeeRateRequest;
-import com.crypto.jtrade.core.api.model.ClientSettingRequest;
-import com.crypto.jtrade.core.api.model.DepositRequest;
-import com.crypto.jtrade.core.api.model.EmptyRequest;
-import com.crypto.jtrade.core.api.model.FundingRateRequest;
-import com.crypto.jtrade.core.api.model.LiquidationCancelOrderRequest;
-import com.crypto.jtrade.core.api.model.MarkPriceRequest;
-import com.crypto.jtrade.core.api.model.OTCRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderResponse;
-import com.crypto.jtrade.core.api.model.SymbolIndicatorRequest;
-import com.crypto.jtrade.core.api.model.SymbolInfoRequest;
-import com.crypto.jtrade.core.api.model.SystemParameterRequest;
-import com.crypto.jtrade.core.api.model.TradeAuthorityRequest;
-import com.crypto.jtrade.core.api.model.WithdrawRequest;
+import com.crypto.jtrade.core.api.model.*;
 import com.crypto.jtrade.core.provider.model.convert.BeanMapping;
-import com.crypto.jtrade.core.provider.model.landing.AssetInfoLanding;
-import com.crypto.jtrade.core.provider.model.landing.ClientFeeRateLanding;
-import com.crypto.jtrade.core.provider.model.landing.ClientTradeAuthorityLanding;
-import com.crypto.jtrade.core.provider.model.landing.SymbolInfoLanding;
-import com.crypto.jtrade.core.provider.model.landing.SystemParameterLanding;
+import com.crypto.jtrade.core.provider.model.landing.*;
 import com.crypto.jtrade.core.provider.model.liquidation.LiquidationCanceledOrder;
 import com.crypto.jtrade.core.provider.model.queue.CommandEvent;
 import com.crypto.jtrade.core.provider.model.session.OrderSession;
@@ -70,18 +40,12 @@ import com.crypto.jtrade.core.provider.service.match.MatchEngine;
 import com.crypto.jtrade.core.provider.service.match.MatchEngineManager;
 import com.crypto.jtrade.core.provider.service.rule.TradeRule;
 import com.crypto.jtrade.core.provider.service.rule.TradeRuleManager;
-import com.crypto.jtrade.core.provider.service.rule.impl.perpetual.MatchTradeRule;
 import com.crypto.jtrade.core.provider.service.trade.TradeService;
 import com.crypto.jtrade.core.provider.util.ClientLockHelper;
 import com.crypto.jtrade.core.provider.util.OrderSessionHelper;
-import com.crypto.jtrade.core.provider.util.ResponseFutureHelper;
 import com.crypto.jtrade.core.provider.util.SequenceHelper;
 import com.crypto.jtrade.core.provider.util.StatisticsHelper;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslator;
-import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -117,9 +81,6 @@ public class TradeServiceImpl implements TradeService {
     @Autowired
     private TradeRuleManager tradeRuleManager;
 
-    @Autowired
-    private MatchTradeRule matchTradeRule;
-
     private Disruptor<CommandEvent> tradeDisruptor;
 
     private RingBuffer<CommandEvent> tradeQueue;
@@ -129,222 +90,13 @@ public class TradeServiceImpl implements TradeService {
         initTradeQueue();
     }
 
-    /**
-     * empty command
-     */
     @Override
-    public BaseResponse emptyCommand(EmptyRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.EMPTY_COMMAND, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set system parameter
-     */
-    @Override
-    public BaseResponse setSystemParameter(SystemParameterRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_SYSTEM_PARAMETER, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set symbol info
-     */
-    @Override
-    public BaseResponse setSymbolInfo(SymbolInfoRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_SYMBOL_INFO, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set symbol indicator
-     */
-    @Override
-    public BaseResponse setSymbolIndicator(SymbolIndicatorRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_SYMBOL_INDICATOR, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set asset info
-     */
-    @Override
-    public BaseResponse setAssetInfo(AssetInfoRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_ASSET_INFO, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set funding rate
-     */
-    @Override
-    public BaseResponse setFundingRate(List<FundingRateRequest> request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_FUNDING_RATE, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set mark price
-     */
-    @Override
-    public BaseResponse setMarkPrice(List<MarkPriceRequest> request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_MARK_PRICE, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set fee rate by client
-     */
-    @Override
-    public BaseResponse setClientFeeRate(List<ClientFeeRateRequest> request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_CLIENT_FEE_RATE, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set trade authority by client
-     */
-    @Override
-    public BaseResponse setClientTradeAuthority(List<TradeAuthorityRequest> request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_CLIENT_TRADE_AUTHORITY, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * set client setting
-     */
-    @Override
-    public BaseResponse setClientSetting(ClientSettingRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.SET_CLIENT_SETTING, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * deposit
-     */
-    @Override
-    public BaseResponse deposit(DepositRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.DEPOSIT, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * withdraw
-     */
-    @Override
-    public BaseResponse withdraw(WithdrawRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.WITHDRAW, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * place order
-     */
-    @Override
-    public BaseResponse<PlaceOrderResponse> placeOrder(PlaceOrderRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.PLACE_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * place OTO order
-     */
-    @Override
-    public BaseResponse<PlaceOrderResponse> placeOTOOrder(List<PlaceOrderRequest> request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.PLACE_OTO_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * place order when stop order triggered
-     */
-    @Override
-    public BaseResponse stopTriggeredPlaceOrder(Order request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.STOP_TRIGGERED_PLACE_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * cancel order
-     */
-    @Override
-    public BaseResponse cancelOrder(CancelOrderRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.CANCEL_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    @Override
-    public BaseResponse stopRejectedCancelOrder(Order request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.STOP_REJECTED_CANCEL_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * cancel order when liquidation
-     */
-    @Override
-    public BaseResponse liquidationCancelOrder(LiquidationCancelOrderRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.LIQUIDATION_CANCEL_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    @Override
-    public BaseResponse triggerSecondaryOrder(Order request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.TRIGGER_SECONDARY_ORDER, request, future);
-        return getResponse(future);
-    }
-
-    /**
-     * OTC trade
-     */
-    @Override
-    public BaseResponse otcTrade(OTCRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.OTC_TRADE, request, future);
-        return getResponse(future);
-    }
-
-    @Override
-    public BaseResponse adjustPositionMargin(AdjustPositionMarginRequest request) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.ADJUST_POSITION_MARGIN, request, future);
-        return getResponse(future);
-    }
-
-    @Override
-    public BaseResponse deductCollateralAssets(String clientId) {
-        CompletableFuture<BaseResponse> future = ResponseFutureHelper.generateFuture();
-        publishToQueue(CommandIdentity.DEDUCT_COLLATERAL, clientId, future);
-        return getResponse(future);
-    }
-
-    /**
-     * publish to queue
-     */
-    private void publishToQueue(CommandIdentity identity, Object request, CompletableFuture<BaseResponse> future) {
+    public void publishCommand(CommandEvent commandEvent) {
         final EventTranslator<CommandEvent> translator = (event, sequence) -> {
-            event.setIdentity(identity);
-            event.setRequest(request);
-            event.setFuture(future);
+            event.setRequestId(commandEvent.getRequestId());
+            event.setIdentity(commandEvent.getIdentity());
+            event.setRequest(commandEvent.getRequest());
+            event.setFuture(commandEvent.getFuture());
         };
         if (!this.tradeQueue.tryPublishEvent(translator)) {
             log.error("System is busy, has too many requests, queue is full and bufferSize={}",
@@ -361,14 +113,6 @@ public class TradeServiceImpl implements TradeService {
         @Override
         public void onEvent(final CommandEvent commandEvent, final long sequence, final boolean endOfBatch)
             throws Exception {
-            final Long requestId = SequenceHelper.incrementAndGetRequestId();
-            ResponseFutureHelper.registerFuture(commandEvent.getFuture());
-            commandEvent.setRequestId(requestId);
-
-            /**
-             * TODO: CommandEvent can be serialized here
-             */
-
             switch (commandEvent.getIdentity()) {
                 case EMPTY_COMMAND:
                     emptyCommandHandler(commandEvent);
@@ -449,7 +193,7 @@ public class TradeServiceImpl implements TradeService {
         EmptyRequest request = commandEvent.getRequest();
         MatchEngine matchEngine = matchEngineManager.getMatchEngine(request.getSymbol());
         matchEngine.emptyCommand(request);
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -492,7 +236,7 @@ public class TradeServiceImpl implements TradeService {
         /**
          * release future, the request can be answered.
          */
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -516,7 +260,7 @@ public class TradeServiceImpl implements TradeService {
             lock.unlock();
         }
         // release future, the request can be answered.
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -541,7 +285,7 @@ public class TradeServiceImpl implements TradeService {
         /**
          * TODO: The last requestId is not save to redis.
          */
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -559,7 +303,7 @@ public class TradeServiceImpl implements TradeService {
         mySqlLanding.setAssetInfo(landing);
 
         // release future, the request can be answered.
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -572,7 +316,7 @@ public class TradeServiceImpl implements TradeService {
         for (TradeRule rule : tradeRules) {
             rule.setFundingRate(commandEvent.getRequestId(), request);
         }
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
         // statistics execute time
         if (StatisticsHelper.enabled()) {
             log.info("set funding rate in commandEvent queue execute_time: {}us", Utils.currentMicroTime() - startTime);
@@ -590,7 +334,7 @@ public class TradeServiceImpl implements TradeService {
         /**
          * TODO: The last requestId is not save to redis.
          */
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -612,7 +356,7 @@ public class TradeServiceImpl implements TradeService {
             redisLanding.setClientFeeRate(landing);
             mySqlLanding.setClientFeeRate(landing);
         }
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -635,7 +379,7 @@ public class TradeServiceImpl implements TradeService {
             redisLanding.setClientTradeAuthority(landing);
             mySqlLanding.setClientTradeAuthority(landing);
         }
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -656,7 +400,7 @@ public class TradeServiceImpl implements TradeService {
         /**
          * release future, the request can be answered.
          */
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -677,7 +421,7 @@ public class TradeServiceImpl implements TradeService {
         /**
          * release future, the request can be answered.
          */
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -695,7 +439,7 @@ public class TradeServiceImpl implements TradeService {
         } finally {
             lock.unlock();
         }
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -732,7 +476,7 @@ public class TradeServiceImpl implements TradeService {
         }
         // release future, the request can be answered.
         PlaceOrderResponse response = new PlaceOrderResponse(order.getClientOrderId(), order.getOrderId());
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success(response));
+        commandEvent.getFuture().complete(ResponseHelper.success(response));
         // statistics execute time
         if (StatisticsHelper.enabled()) {
             log.info("place order in commandEvent queue execute_time: {}us", Utils.currentMicroTime() - startTime);
@@ -789,7 +533,7 @@ public class TradeServiceImpl implements TradeService {
         // release future, the request can be answered.
         PlaceOrderResponse response =
             new PlaceOrderResponse(primaryOrder.getClientOrderId(), primaryOrder.getOrderId());
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success(response));
+        commandEvent.getFuture().complete(ResponseHelper.success(response));
     }
 
     /**
@@ -829,7 +573,7 @@ public class TradeServiceImpl implements TradeService {
         matchEngine.placeOrder(order);
         // release future, the triggeredOrder can be answered.
         PlaceOrderResponse response = new PlaceOrderResponse(order.getClientOrderId(), order.getOrderId());
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success(response));
+        commandEvent.getFuture().complete(ResponseHelper.success(response));
     }
 
     /**
@@ -862,7 +606,7 @@ public class TradeServiceImpl implements TradeService {
             matchEngine.cancelOrder(order);
         }
         // release future, the request can be answered.
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
         // statistics execute time
         if (StatisticsHelper.enabled()) {
             log.info("cancel order in commandEvent queue execute_time: {}us", Utils.currentMicroTime() - startTime);
@@ -875,7 +619,6 @@ public class TradeServiceImpl implements TradeService {
     private void stopRejectedCancelOrderHandler(CommandEvent<Order> commandEvent) {
         Order cancelOrder = commandEvent.getRequest();
         List<TradeRule> tradeRules = tradeRuleManager.get(CommandIdentity.CANCEL_ORDER);
-        Order order;
         Lock lock = ClientLockHelper.getLock(cancelOrder.getClientId());
         lock.lock();
         try {
@@ -892,6 +635,8 @@ public class TradeServiceImpl implements TradeService {
         } finally {
             lock.unlock();
         }
+        // release future, the request can be answered.
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -923,7 +668,7 @@ public class TradeServiceImpl implements TradeService {
         MatchEngine matchEngine = matchEngineManager.getMatchEngine(request.getSymbol());
         matchEngine.liquidationCancelOrder(new LiquidationCanceledOrder(request.getLatch(), order));
         // release future, the request can be answered.
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -946,6 +691,8 @@ public class TradeServiceImpl implements TradeService {
         } finally {
             lock.unlock();
         }
+        // release future, the request can be answered.
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -975,7 +722,7 @@ public class TradeServiceImpl implements TradeService {
             }
         }
         // release future, the request can be answered.
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -993,7 +740,7 @@ public class TradeServiceImpl implements TradeService {
         } finally {
             lock.unlock();
         }
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -1011,7 +758,7 @@ public class TradeServiceImpl implements TradeService {
         } finally {
             lock.unlock();
         }
-        ResponseFutureHelper.releaseFuture(ResponseHelper.success());
+        commandEvent.getFuture().complete(ResponseHelper.success());
     }
 
     /**
@@ -1046,20 +793,6 @@ public class TradeServiceImpl implements TradeService {
         this.tradeDisruptor
             .setDefaultExceptionHandler(new CommandLogExceptionHandler<CommandEvent>(getClass().getSimpleName()));
         this.tradeQueue = this.tradeDisruptor.start();
-    }
-
-    /**
-     * get response
-     */
-    BaseResponse getResponse(CompletableFuture<BaseResponse> future) {
-        try {
-            return future.get(5, TimeUnit.SECONDS);
-        } catch (TimeoutException t) {
-            throw new TradeException(TradeError.REQUEST_PROCESS_TIMEOUT);
-        } catch (Exception e) {
-            log.error("get response from future", e);
-            throw new TradeException(TradeError.INTERNAL);
-        }
     }
 
     /**

@@ -31,7 +31,7 @@ import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.cache.RedisService;
 import com.crypto.jtrade.core.provider.service.funding.FundingRateService;
 import com.crypto.jtrade.core.provider.service.publish.PublicPublish;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -69,7 +69,7 @@ public class FundingRateServiceImpl implements FundingRateService {
     private LocalCacheService localCache;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     @Autowired
     private PublicPublish publicPublish;
@@ -220,7 +220,7 @@ public class FundingRateServiceImpl implements FundingRateService {
                 /**
                  * set funding rate to trade service which calculating funding fee
                  */
-                tradeService.setFundingRate(fundingRateList);
+                tradeCommand.setFundingRate(fundingRateList);
             }
             // save to redis
             if (!CollectionUtils.isEmpty(operationList)) {

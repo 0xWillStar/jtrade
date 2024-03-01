@@ -3,15 +3,15 @@ package com.crypto.jtrade.core.provider.service.trade;
 import com.crypto.jtrade.core.provider.model.queue.CommandEvent;
 
 /**
- * Trade service
+ * trade log
  *
  * @author 0xWill
  **/
-public interface TradeService {
+public interface TradeLog {
 
     /**
-     * publish command
+     * publish log
      */
-    void publishCommand(CommandEvent commandEvent);
+    void publishLog(CommandEvent commandEvent);
 
 }

@@ -78,6 +78,8 @@ public final class Constants {
 
     public static final String[] REDIS_KEY_FRONT_API_KEY = {"jtrade:front:apiKey:", null};
 
+    public static final String REDIS_KEY_COMMAND_LOG = "jtrade:command:log";
+
     /**
      * Product Type
      */

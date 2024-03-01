@@ -20,11 +20,7 @@ import com.crypto.jtrade.common.constants.SymbolStatus;
 import com.crypto.jtrade.common.constants.TradeType;
 import com.crypto.jtrade.common.exception.TradeError;
 import com.crypto.jtrade.common.exception.TradeException;
-import com.crypto.jtrade.common.model.BaseResponse;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolIndicator;
-import com.crypto.jtrade.common.model.SymbolInfo;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.TimerManager;
 import com.crypto.jtrade.common.util.Utils;
 import com.crypto.jtrade.core.api.model.CancelOrderRequest;
@@ -37,7 +33,7 @@ import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
 import com.crypto.jtrade.core.provider.service.match.MatchEngineManager;
 import com.crypto.jtrade.core.provider.service.publish.MarketService;
 import com.crypto.jtrade.core.provider.service.trade.SymbolService;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -63,7 +59,7 @@ public class SymbolServiceImpl implements SymbolService {
     private RedisLanding redisLanding;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     @PostConstruct
     public void init() {
@@ -167,7 +163,7 @@ public class SymbolServiceImpl implements SymbolService {
      */
     private boolean sendEmptyCommandSync(String symbol) {
         CountDownLatch latch = new CountDownLatch(1);
-        BaseResponse response = tradeService.emptyCommand(new EmptyRequest(symbol, latch));
+        BaseResponse response = tradeCommand.emptyCommand(new EmptyRequest(symbol, latch));
         if (response.isError()) {
             log.error("send empty command is fail during updating symbol status to NOT_ACTIVE: {}, {}", symbol,
                 response.getMsg());
@@ -197,7 +193,7 @@ public class SymbolServiceImpl implements SymbolService {
                     request.setClientId(clientId);
                     request.setSymbol(symbol);
                     request.setOrderId(order.getOrderId());
-                    tradeService.cancelOrder(request);
+                    tradeCommand.cancelOrder(request);
                 }
             }
         }
@@ -296,7 +292,7 @@ public class SymbolServiceImpl implements SymbolService {
         List<OTCRequest.Detail> detailList = new ArrayList<>();
         detailList.add(detail);
         otcRequest.setDetailList(detailList);
-        BaseResponse response = tradeService.otcTrade(otcRequest);
+        BaseResponse response = tradeCommand.otcTrade(otcRequest);
         if (response.isError()) {
             log.error("close position is fail during updating symbol status to NOT_ACTIVE: {}, {}",
                 JSON.toJSONString(otcRequest), response.getMsg());

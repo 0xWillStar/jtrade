@@ -29,9 +29,11 @@ spring:
     lettuce:
       pool:
         max-active: 20
-        max-wait: -1
         max-idle: 5
         min-idle: 2
+  redis-log:
+    host: 127.0.0.1
+    password: 123456
   rabbitmq:
     host: 127.0.0.1
     port: 5672
@@ -49,6 +51,8 @@ jtrade:
     path: ./log
     level: INFO
   disruptor:
+    trade-command-buffer-size: 8192
+    trade-log-buffer-size: 8192
     trade-buffer-size: 4096
     match-buffer-size: 4096
     public-publish-buffer-size: 8192
@@ -73,12 +77,18 @@ jtrade:
     public-publish-max-batch-size: 100
     private-publish-interval-milli-seconds: 10000
     private-publish-max-batch-size: 100
+  trade-log:
+    file-path: ./command
+    file-prefix: command
+    file-max-size-mb: 500
+    force-interval-milli-seconds: 5000
+    force-max-size-kb: 100
   liquidation:
-    enabled: true
+    enabled: false
     calculate-interval-seconds: 5
     delay-intervals: 2
   deduct:
-    enabled: true
+    enabled: false
     calculate-interval-seconds: 7
     delay-intervals: 1
   markPrice:

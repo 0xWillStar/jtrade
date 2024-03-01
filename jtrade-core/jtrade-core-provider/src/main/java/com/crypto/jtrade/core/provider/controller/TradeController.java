@@ -7,25 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.crypto.jtrade.common.model.BaseResponse;
 import com.crypto.jtrade.core.api.TradeApi;
-import com.crypto.jtrade.core.api.model.AdjustPositionMarginRequest;
-import com.crypto.jtrade.core.api.model.AssetInfoRequest;
-import com.crypto.jtrade.core.api.model.CancelOrderRequest;
-import com.crypto.jtrade.core.api.model.ClientFeeRateRequest;
-import com.crypto.jtrade.core.api.model.ClientSettingRequest;
-import com.crypto.jtrade.core.api.model.DepositRequest;
-import com.crypto.jtrade.core.api.model.EmptyRequest;
-import com.crypto.jtrade.core.api.model.FundingRateRequest;
-import com.crypto.jtrade.core.api.model.LiquidationCancelOrderRequest;
-import com.crypto.jtrade.core.api.model.MarkPriceRequest;
-import com.crypto.jtrade.core.api.model.OTCRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderResponse;
-import com.crypto.jtrade.core.api.model.SymbolIndicatorRequest;
-import com.crypto.jtrade.core.api.model.SymbolInfoRequest;
-import com.crypto.jtrade.core.api.model.SystemParameterRequest;
-import com.crypto.jtrade.core.api.model.TradeAuthorityRequest;
-import com.crypto.jtrade.core.api.model.WithdrawRequest;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
+import com.crypto.jtrade.core.api.model.*;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
 
 /**
  * trade api controller
@@ -36,96 +19,96 @@ import com.crypto.jtrade.core.provider.service.trade.TradeService;
 public class TradeController implements TradeApi {
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     @Override
     public BaseResponse emptyCommand(EmptyRequest request) {
-        return tradeService.emptyCommand(request);
+        return tradeCommand.emptyCommand(request);
     }
 
     @Override
     public BaseResponse setSystemParameter(SystemParameterRequest request) {
-        return tradeService.setSystemParameter(request);
+        return tradeCommand.setSystemParameter(request);
     }
 
     @Override
     public BaseResponse setSymbolInfo(SymbolInfoRequest request) {
-        return tradeService.setSymbolInfo(request);
+        return tradeCommand.setSymbolInfo(request);
     }
 
     @Override
     public BaseResponse setSymbolIndicator(SymbolIndicatorRequest request) {
-        return tradeService.setSymbolIndicator(request);
+        return tradeCommand.setSymbolIndicator(request);
     }
 
     @Override
     public BaseResponse setAssetInfo(AssetInfoRequest request) {
-        return tradeService.setAssetInfo(request);
+        return tradeCommand.setAssetInfo(request);
     }
 
     @Override
     public BaseResponse setFundingRate(List<FundingRateRequest> request) {
-        return tradeService.setFundingRate(request);
+        return tradeCommand.setFundingRate(request);
     }
 
     @Override
     public BaseResponse setMarkPrice(List<MarkPriceRequest> request) {
-        return tradeService.setMarkPrice(request);
+        return tradeCommand.setMarkPrice(request);
     }
 
     @Override
     public BaseResponse setClientFeeRate(List<ClientFeeRateRequest> request) {
-        return tradeService.setClientFeeRate(request);
+        return tradeCommand.setClientFeeRate(request);
     }
 
     @Override
     public BaseResponse setClientTradeAuthority(List<TradeAuthorityRequest> request) {
-        return tradeService.setClientTradeAuthority(request);
+        return tradeCommand.setClientTradeAuthority(request);
     }
 
     @Override
     public BaseResponse setClientSetting(ClientSettingRequest request) {
-        return tradeService.setClientSetting(request);
+        return tradeCommand.setClientSetting(request);
     }
 
     @Override
     public BaseResponse deposit(DepositRequest request) {
-        return tradeService.deposit(request);
+        return tradeCommand.deposit(request);
     }
 
     @Override
     public BaseResponse withdraw(WithdrawRequest request) {
-        return tradeService.withdraw(request);
+        return tradeCommand.withdraw(request);
     }
 
     @Override
     public BaseResponse<PlaceOrderResponse> placeOrder(PlaceOrderRequest request) {
-        return tradeService.placeOrder(request);
+        return tradeCommand.placeOrder(request);
     }
 
     @Override
     public BaseResponse cancelOrder(CancelOrderRequest request) {
-        return tradeService.cancelOrder(request);
+        return tradeCommand.cancelOrder(request);
     }
 
     @Override
     public BaseResponse liquidationCancelOrder(LiquidationCancelOrderRequest request) {
-        return tradeService.liquidationCancelOrder(request);
+        return tradeCommand.liquidationCancelOrder(request);
     }
 
     @Override
     public BaseResponse otcTrade(OTCRequest request) {
-        return tradeService.otcTrade(request);
+        return tradeCommand.otcTrade(request);
     }
 
     @Override
     public BaseResponse adjustPositionMargin(AdjustPositionMarginRequest request) {
-        return tradeService.adjustPositionMargin(request);
+        return tradeCommand.adjustPositionMargin(request);
     }
 
     @Override
     public BaseResponse<PlaceOrderResponse> placeOTOOrder(List<PlaceOrderRequest> request) {
-        return tradeService.placeOTOOrder(request);
+        return tradeCommand.placeOTOOrder(request);
     }
 
 }

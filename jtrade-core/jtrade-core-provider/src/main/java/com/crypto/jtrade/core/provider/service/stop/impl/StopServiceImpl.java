@@ -18,12 +18,8 @@ import com.crypto.jtrade.common.util.NamedThreadFactory;
 import com.crypto.jtrade.core.provider.model.queue.TriggerPriceEvent;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.stop.StopService;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslator;
-import com.lmax.disruptor.RingBuffer;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -45,7 +41,7 @@ public class StopServiceImpl implements StopService {
     private LocalCacheService localCache;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     private Disruptor<TriggerPriceEvent> stopDisruptor;
 
@@ -93,9 +89,9 @@ public class StopServiceImpl implements StopService {
                 log.info("trigger stop order, triggerPriceEvent: {}, orderList: {}",
                     JSON.toJSONString(triggerPriceEvent), JSON.toJSONString(orderList));
                 for (Order order : orderList) {
-                    BaseResponse response = tradeService.stopTriggeredPlaceOrder(order);
+                    BaseResponse response = tradeCommand.stopTriggeredPlaceOrder(order);
                     if (response.isError()) {
-                        tradeService.stopRejectedCancelOrder(order);
+                        tradeCommand.stopRejectedCancelOrder(order);
                     }
                 }
             }

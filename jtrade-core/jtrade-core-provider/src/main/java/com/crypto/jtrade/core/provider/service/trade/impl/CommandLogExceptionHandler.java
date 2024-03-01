@@ -3,10 +3,10 @@ package com.crypto.jtrade.core.provider.service.trade.impl;
 import com.alibaba.fastjson.JSON;
 import com.crypto.jtrade.common.exception.TradeError;
 import com.crypto.jtrade.common.exception.TradeException;
+import com.crypto.jtrade.common.model.BaseResponse;
 import com.crypto.jtrade.common.util.LogExceptionHandler;
 import com.crypto.jtrade.common.util.ResponseHelper;
 import com.crypto.jtrade.core.provider.model.queue.CommandEvent;
-import com.crypto.jtrade.core.provider.util.ResponseFutureHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,10 +25,14 @@ public class CommandLogExceptionHandler<T extends CommandEvent> extends LogExcep
     @Override
     public void handleEventException(Throwable ex, long sequence, T event) {
         log.error("Handle {} disruptor event error, event is {}", this.name, JSON.toJSONString(event), ex);
-        if (ex instanceof TradeException) {
-            ResponseFutureHelper.releaseFuture(ResponseHelper.error((TradeException)ex));
-        } else {
-            ResponseFutureHelper.releaseFuture(ResponseHelper.error(TradeError.INTERNAL));
+        if (event.getFuture() != null) {
+            BaseResponse response;
+            if (ex instanceof TradeException) {
+                response = ResponseHelper.error((TradeException)ex);
+            } else {
+                response = ResponseHelper.error(TradeError.INTERNAL);
+            }
+            event.getFuture().complete(response);
         }
     }
 }

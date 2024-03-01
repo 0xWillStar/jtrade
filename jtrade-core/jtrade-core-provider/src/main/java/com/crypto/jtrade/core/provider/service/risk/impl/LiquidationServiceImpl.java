@@ -10,38 +10,25 @@ import java.util.concurrent.locks.Lock;
 
 import javax.annotation.PostConstruct;
 
-import com.crypto.jtrade.core.provider.service.cache.ClientEntity;
-import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
-import com.crypto.jtrade.core.provider.service.risk.LiquidationService;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
-import com.crypto.jtrade.core.provider.util.ClientLockHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.MarginType;
-import com.crypto.jtrade.common.constants.MatchRole;
-import com.crypto.jtrade.common.constants.OrderSide;
-import com.crypto.jtrade.common.constants.OrderType;
+import com.alibaba.fastjson.JSON;
+import com.crypto.jtrade.common.constants.*;
 import com.crypto.jtrade.common.constants.SystemParameter;
-import com.crypto.jtrade.common.constants.TradeType;
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.BaseResponse;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolInfo;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.BigDecimalUtil;
 import com.crypto.jtrade.common.util.TimerManager;
 import com.crypto.jtrade.common.util.Utils;
-import com.crypto.jtrade.core.api.model.CancelOrderRequest;
-import com.crypto.jtrade.core.api.model.LiquidationCancelOrderRequest;
-import com.crypto.jtrade.core.api.model.OTCRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderRequest;
-import com.crypto.jtrade.core.api.model.TradeAuthorityRequest;
-import com.alibaba.fastjson.JSON;
+import com.crypto.jtrade.core.api.model.*;
+import com.crypto.jtrade.core.provider.service.cache.ClientEntity;
+import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
+import com.crypto.jtrade.core.provider.service.risk.LiquidationService;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
+import com.crypto.jtrade.core.provider.util.ClientLockHelper;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -69,7 +56,7 @@ public class LiquidationServiceImpl implements LiquidationService {
     private LocalCacheService localCache;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     @PostConstruct
     public void init() {
@@ -144,7 +131,7 @@ public class LiquidationServiceImpl implements LiquidationService {
              * liquidation isn't triggered, check deduct collateral assets.
              */
             if (checkDeductNoLiquidation(clientId)) {
-                tradeService.deductCollateralAssets(clientId);
+                tradeCommand.deductCollateralAssets(clientId);
             }
 
         } else {
@@ -184,7 +171,7 @@ public class LiquidationServiceImpl implements LiquidationService {
                  * 5. after liquidation, check deduct collateral assets.
                  */
                 if (checkDeductAfterLiquidation(clientId)) {
-                    tradeService.deductCollateralAssets(clientId);
+                    tradeCommand.deductCollateralAssets(clientId);
                 }
             } else {
                 /**
@@ -335,7 +322,7 @@ public class LiquidationServiceImpl implements LiquidationService {
                 request.setClientId(clientEntity.getClientId());
                 request.setSymbol(order.getSymbol());
                 request.setOrderId(order.getOrderId());
-                BaseResponse response = tradeService.liquidationCancelOrder(request);
+                BaseResponse response = tradeCommand.liquidationCancelOrder(request);
                 if (response.isError()) {
                     log.error("cancel order is fail during liquidation: {}, {}", JSON.toJSONString(request),
                         response.getMsg());
@@ -409,7 +396,7 @@ public class LiquidationServiceImpl implements LiquidationService {
             }
         }
         if (!CollectionUtils.isEmpty(detailList)) {
-            BaseResponse response = tradeService.otcTrade(otcRequest);
+            BaseResponse response = tradeCommand.otcTrade(otcRequest);
             if (response.isError()) {
                 log.error("take over position is fail during liquidation: {}, {}", JSON.toJSONString(otcRequest),
                     response.getMsg());
@@ -490,7 +477,7 @@ public class LiquidationServiceImpl implements LiquidationService {
                 request.setClientId(clientEntity.getClientId());
                 request.setSymbol(order.getSymbol());
                 request.setOrderId(order.getOrderId());
-                BaseResponse response = tradeService.liquidationCancelOrder(request);
+                BaseResponse response = tradeCommand.liquidationCancelOrder(request);
                 if (response.isError()) {
                     log.error("cancel order is fail during liquidation: {}, {}", JSON.toJSONString(request),
                         response.getMsg());
@@ -557,7 +544,7 @@ public class LiquidationServiceImpl implements LiquidationService {
             }
             detailList.add(detail);
 
-            BaseResponse response = tradeService.otcTrade(otcRequest);
+            BaseResponse response = tradeCommand.otcTrade(otcRequest);
             if (response.isError()) {
                 log.error("take over position is fail during liquidation: {}, {}", JSON.toJSONString(otcRequest),
                     response.getMsg());
@@ -589,7 +576,7 @@ public class LiquidationServiceImpl implements LiquidationService {
     private void setClientTradeAuthority(String clientId, Integer tradeAuthority) {
         List<TradeAuthorityRequest> requestList = new ArrayList<>();
         requestList.add(new TradeAuthorityRequest(clientId, tradeAuthority));
-        tradeService.setClientTradeAuthority(requestList);
+        tradeCommand.setClientTradeAuthority(requestList);
     }
 
     /**
@@ -603,7 +590,7 @@ public class LiquidationServiceImpl implements LiquidationService {
             request.setClientId(clientEntity.getClientId());
             request.setSymbol(order.getSymbol());
             request.setOrderId(order.getOrderId());
-            tradeService.cancelOrder(request);
+            tradeCommand.cancelOrder(request);
         }
     }
 
@@ -629,7 +616,7 @@ public class LiquidationServiceImpl implements LiquidationService {
                     request.setType(OrderType.LIMIT);
                     request.setQuantity(position.getPositionAmt().abs());
                     request.setReduceOnly(true);
-                    BaseResponse response = tradeService.placeOrder(request);
+                    BaseResponse response = tradeCommand.placeOrder(request);
                     if (response.isError()) {
                         log.error("insurance close position order request is fail: {}, {}", JSON.toJSONString(request),
                             response.getMsg());

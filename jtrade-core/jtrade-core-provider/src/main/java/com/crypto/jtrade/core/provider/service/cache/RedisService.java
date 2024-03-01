@@ -6,15 +6,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 import com.crypto.jtrade.common.constants.SystemParameter;
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.AssetInfo;
-import com.crypto.jtrade.common.model.ClientSetting;
-import com.crypto.jtrade.common.model.FeeRate;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolInfo;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.OnlyForTest;
 import com.crypto.jtrade.core.provider.model.landing.RedisOperation;
+import com.crypto.jtrade.core.provider.model.queue.CommandEvent;
 
 /**
  * Redis service
@@ -108,5 +103,15 @@ public interface RedisService {
      */
     @OnlyForTest
     void deleteByPrefix(String prefix);
+
+    /**
+     * Batch write to redis for trading log
+     */
+    void logBatchWriteOperations(List<RedisOperation> operationList);
+
+    /**
+     * save command log
+     */
+    void saveCommandLog(CommandEvent commandEvent);
 
 }

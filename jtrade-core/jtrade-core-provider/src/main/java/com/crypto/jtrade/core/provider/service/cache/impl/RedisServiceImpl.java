@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
@@ -15,17 +16,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import com.alibaba.fastjson2.JSON;
 import com.crypto.jtrade.common.constants.Constants;
 import com.crypto.jtrade.common.constants.SystemParameter;
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.AssetInfo;
-import com.crypto.jtrade.common.model.ClientSetting;
-import com.crypto.jtrade.common.model.FeeRate;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolInfo;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.Utils;
 import com.crypto.jtrade.core.provider.model.landing.RedisOperation;
+import com.crypto.jtrade.core.provider.model.queue.CommandEvent;
 import com.crypto.jtrade.core.provider.service.cache.RedisService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,14 +37,19 @@ import lombok.extern.slf4j.Slf4j;
 public class RedisServiceImpl implements RedisService {
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    @Qualifier("tradeRedisTemplate")
+    private StringRedisTemplate tradeRedisTemplate;
+
+    @Autowired
+    @Qualifier("logRedisTemplate")
+    private StringRedisTemplate logRedisTemplate;
 
     /**
      * get all system parameter from redis
      */
     @Override
     public Map<SystemParameter, String> getSystemParameters() {
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(Constants.REDIS_KEY_SYSTEM_PARAMETER);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(Constants.REDIS_KEY_SYSTEM_PARAMETER);
         return entries.entrySet().stream().collect(Collectors
             .toMap(entry -> SystemParameter.valueOf((String)entry.getKey()), entry -> (String)entry.getValue()));
     }
@@ -57,7 +59,7 @@ public class RedisServiceImpl implements RedisService {
      */
     @Override
     public Map<String, SymbolInfo> getSymbols() {
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(Constants.REDIS_KEY_SYMBOL);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(Constants.REDIS_KEY_SYMBOL);
         return entries.entrySet().stream().collect(
             Collectors.toMap(entry -> (String)entry.getKey(), entry -> SymbolInfo.toObject((String)entry.getValue())));
     }
@@ -67,7 +69,7 @@ public class RedisServiceImpl implements RedisService {
      */
     @Override
     public Map<String, AssetInfo> getAssets() {
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(Constants.REDIS_KEY_ASSET);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(Constants.REDIS_KEY_ASSET);
         return entries.entrySet().stream().collect(
             Collectors.toMap(entry -> (String)entry.getKey(), entry -> AssetInfo.toObject((String)entry.getValue())));
     }
@@ -78,7 +80,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public ConcurrentMap<String, AssetBalance> getBalancesByClientId(String clientId) {
         String key = Utils.format(Constants.REDIS_KEY_BALANCE, clientId);
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(key);
         return entries.entrySet().stream().collect(Collectors.toConcurrentMap(entry -> (String)entry.getKey(),
             entry -> AssetBalance.toObject((String)entry.getValue())));
     }
@@ -89,7 +91,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public ConcurrentMap<String, Position> getPositionsByClientId(String clientId) {
         String key = Utils.format(Constants.REDIS_KEY_POSITION, clientId);
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(key);
         return entries.entrySet().stream().collect(Collectors.toConcurrentMap(entry -> (String)entry.getKey(),
             entry -> Position.toObject((String)entry.getValue())));
     }
@@ -100,7 +102,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public ConcurrentMap<Long, Order> getOrdersByClientId(String clientId) {
         String key = Utils.format(Constants.REDIS_KEY_ORDER, clientId);
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(key);
         return entries.entrySet().stream().collect(Collectors.toConcurrentMap(
             entry -> Long.parseLong((String)entry.getKey()), entry -> Order.toObject((String)entry.getValue())));
     }
@@ -111,7 +113,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public ConcurrentMap<String, ClientSetting> getSettingsByClientId(String clientId) {
         String key = Utils.format(Constants.REDIS_KEY_CLIENT_SETTING, clientId);
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+        Map<Object, Object> entries = tradeRedisTemplate.opsForHash().entries(key);
         return entries.entrySet().stream().collect(Collectors.toConcurrentMap(entry -> (String)entry.getKey(),
             entry -> ClientSetting.toObject((String)entry.getValue())));
     }
@@ -122,7 +124,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public FeeRate getFeeRateByClientId(String clientId) {
         String key = Utils.format(Constants.REDIS_KEY_CLIENT_FEE_RATE, clientId);
-        String value = redisTemplate.opsForValue().get(key);
+        String value = tradeRedisTemplate.opsForValue().get(key);
         return value == null ? null : FeeRate.toObject(value);
     }
 
@@ -132,7 +134,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public Integer getTradeAuthorityByClientId(String clientId) {
         String key = Utils.format(Constants.REDIS_KEY_CLIENT_AUTHORITY, clientId);
-        String value = redisTemplate.opsForValue().get(key);
+        String value = tradeRedisTemplate.opsForValue().get(key);
         return value == null ? null : Integer.parseInt(value);
     }
 
@@ -141,7 +143,111 @@ public class RedisServiceImpl implements RedisService {
      */
     @Override
     public void batchWriteOperations(final List<RedisOperation> operationList, final boolean transactionSupport) {
-        redisTemplate.executePipelined(new SessionCallback<Object>() {
+        tradeRedisTemplate.executePipelined(sessionCallback(operationList, transactionSupport));
+    }
+
+    /**
+     * get all open orders
+     */
+    @Override
+    public List<Object> getAllOpenOrders() {
+        Set<String> clientIds = tradeRedisTemplate.opsForSet().members(Constants.REDIS_KEY_ORDER_CLIENTS);
+        if (CollectionUtils.isEmpty(clientIds)) {
+            return new ArrayList<>();
+        } else {
+            List<Object> orderList = tradeRedisTemplate.executePipelined(new SessionCallback<Object>() {
+
+                @Override
+                public Object execute(RedisOperations operations) throws DataAccessException {
+                    clientIds.forEach(clientId -> {
+                        String key = Utils.format(Constants.REDIS_KEY_ORDER, clientId);
+                        operations.opsForHash().entries(key);
+                    });
+                    return null;
+                }
+            });
+            return orderList;
+        }
+    }
+
+    /**
+     * get orderClientIds
+     */
+    @Override
+    public Set<String> getOrderClientIds() {
+        return tradeRedisTemplate.opsForSet().members(Constants.REDIS_KEY_ORDER_CLIENTS);
+    }
+
+    /**
+     * get positionClientIds
+     */
+    @Override
+    public Set<String> getPositionClientIds() {
+        return tradeRedisTemplate.opsForSet().members(Constants.REDIS_KEY_POSITION_CLIENTS);
+    }
+
+    @Override
+    public Set<String> getDebtClientIds() {
+        return tradeRedisTemplate.opsForSet().members(Constants.REDIS_KEY_DEBT_CLIENTS);
+    }
+
+    /**
+     * get premiums by the symbol
+     */
+    @Override
+    public List<String> getPremiumsBySymbol(String symbol) {
+        String key = Utils.format(Constants.REDIS_KEY_PREMIUM, symbol);
+        Long size = tradeRedisTemplate.opsForList().size(key);
+        if (size > 0) {
+            return tradeRedisTemplate.opsForList().range(key, 0, size - 1);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * get markPrices by symbol
+     */
+    @Override
+    public Map<Object, Object> getMarkPricesBySymbol(String redisKey) {
+        return tradeRedisTemplate.opsForHash().entries(redisKey);
+    }
+
+    /**
+     * batch delete by prefix
+     */
+    @Override
+    public void deleteByPrefix(String prefix) {
+        Set<String> keys = tradeRedisTemplate.keys(prefix);
+        if (!CollectionUtils.isEmpty(keys)) {
+            tradeRedisTemplate.delete(keys);
+        }
+    }
+
+    /**
+     * Batch write to redis for trading log
+     */
+    @Override
+    public void logBatchWriteOperations(List<RedisOperation> operationList) {
+        logRedisTemplate.executePipelined(sessionCallback(operationList, false));
+    }
+
+    @Override
+    public void saveCommandLog(CommandEvent commandEvent) {
+        logRedisTemplate.opsForHash().put(Constants.REDIS_KEY_COMMAND_LOG, Long.toString(commandEvent.getRequestId()),
+            JSON.toJSONString(commandEvent));
+    }
+
+    /**
+     * sessionCallback
+     * 
+     * @param operationList operation list
+     * @param transactionSupport weather support transaction
+     * @return SessionCallback
+     */
+    private SessionCallback sessionCallback(final List<RedisOperation> operationList,
+        final boolean transactionSupport) {
+        return new SessionCallback<Object>() {
 
             @Override
             public Object execute(RedisOperations operations) throws DataAccessException {
@@ -185,85 +291,7 @@ public class RedisServiceImpl implements RedisService {
                     operations.exec();
                 return null;
             }
-        });
-    }
-
-    /**
-     * get all open orders
-     */
-    @Override
-    public List<Object> getAllOpenOrders() {
-        Set<String> clientIds = redisTemplate.opsForSet().members(Constants.REDIS_KEY_ORDER_CLIENTS);
-        if (CollectionUtils.isEmpty(clientIds)) {
-            return new ArrayList<>();
-        } else {
-            List<Object> orderList = redisTemplate.executePipelined(new SessionCallback<Object>() {
-
-                @Override
-                public Object execute(RedisOperations operations) throws DataAccessException {
-                    clientIds.forEach(clientId -> {
-                        String key = Utils.format(Constants.REDIS_KEY_ORDER, clientId);
-                        operations.opsForHash().entries(key);
-                    });
-                    return null;
-                }
-            });
-            return orderList;
-        }
-    }
-
-    /**
-     * get orderClientIds
-     */
-    @Override
-    public Set<String> getOrderClientIds() {
-        return redisTemplate.opsForSet().members(Constants.REDIS_KEY_ORDER_CLIENTS);
-    }
-
-    /**
-     * get positionClientIds
-     */
-    @Override
-    public Set<String> getPositionClientIds() {
-        return redisTemplate.opsForSet().members(Constants.REDIS_KEY_POSITION_CLIENTS);
-    }
-
-    @Override
-    public Set<String> getDebtClientIds() {
-        return redisTemplate.opsForSet().members(Constants.REDIS_KEY_DEBT_CLIENTS);
-    }
-
-    /**
-     * get premiums by the symbol
-     */
-    @Override
-    public List<String> getPremiumsBySymbol(String symbol) {
-        String key = Utils.format(Constants.REDIS_KEY_PREMIUM, symbol);
-        Long size = redisTemplate.opsForList().size(key);
-        if (size > 0) {
-            return redisTemplate.opsForList().range(key, 0, size - 1);
-        } else {
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * get markPrices by symbol
-     */
-    @Override
-    public Map<Object, Object> getMarkPricesBySymbol(String redisKey) {
-        return redisTemplate.opsForHash().entries(redisKey);
-    }
-
-    /**
-     * batch delete by prefix
-     */
-    @Override
-    public void deleteByPrefix(String prefix) {
-        Set<String> keys = redisTemplate.keys(prefix);
-        if (!CollectionUtils.isEmpty(keys)) {
-            redisTemplate.delete(keys);
-        }
+        };
     }
 
 }

@@ -18,12 +18,8 @@ import com.crypto.jtrade.common.util.NamedThreadFactory;
 import com.crypto.jtrade.core.api.model.CancelOrderRequest;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.oto.OTOService;
-import com.crypto.jtrade.core.provider.service.trade.TradeService;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslator;
-import com.lmax.disruptor.RingBuffer;
+import com.crypto.jtrade.core.provider.service.trade.TradeCommand;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -45,7 +41,7 @@ public class OTOServiceImpl implements OTOService {
     private LocalCacheService localCache;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeCommand tradeCommand;
 
     private Disruptor<ComplexEntity> otoDisruptor;
 
@@ -140,7 +136,7 @@ public class OTOServiceImpl implements OTOService {
         request.setClientId(order.getClientId());
         request.setSymbol(order.getSymbol());
         request.setOrderId(orderId);
-        tradeService.cancelOrder(request);
+        tradeCommand.cancelOrder(request);
     }
 
     /**
@@ -150,7 +146,7 @@ public class OTOServiceImpl implements OTOService {
         Order secondaryOrder =
             localCache.getClientEntity(order.getClientId()).getOrderByOrderId(String.valueOf(orderId));
         if (secondaryOrder != null) {
-            tradeService.triggerSecondaryOrder(secondaryOrder);
+            tradeCommand.triggerSecondaryOrder(secondaryOrder);
         }
     }
 
