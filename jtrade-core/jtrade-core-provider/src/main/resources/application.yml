@@ -9,6 +9,8 @@ server:
 spring:
   application:
     name: jtrade-core
+  main:
+    allow-circular-references: true
   jackson:
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss

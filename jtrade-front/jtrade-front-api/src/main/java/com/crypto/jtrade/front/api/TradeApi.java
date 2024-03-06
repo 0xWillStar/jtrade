@@ -3,27 +3,15 @@ package com.crypto.jtrade.front.api;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.BaseResponse;
-import com.crypto.jtrade.common.model.Bill;
-import com.crypto.jtrade.common.model.ClientSetting;
-import com.crypto.jtrade.common.model.FeeRate;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.Trade;
-import com.crypto.jtrade.core.api.model.AdjustPositionMarginRequest;
-import com.crypto.jtrade.core.api.model.CancelOrderRequest;
-import com.crypto.jtrade.core.api.model.ClientSettingRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderResponse;
-import com.crypto.jtrade.core.api.model.WithdrawRequest;
+import com.crypto.jtrade.common.model.*;
+import com.crypto.jtrade.core.api.model.*;
 import com.crypto.jtrade.front.api.model.LoginRequest;
 import com.crypto.jtrade.front.api.model.LoginResponse;
 
@@ -45,10 +33,10 @@ public interface TradeApi {
     BaseResponse withdraw(@RequestBody WithdrawRequest request);
 
     @PostMapping("/v1/trade/placeOrder")
-    BaseResponse<PlaceOrderResponse> placeOrder(@Valid @RequestBody PlaceOrderRequest request);
+    BaseResponse<PlaceOrderResponse> placeOrder(@Validated @RequestBody PlaceOrderRequest request);
 
     @PostMapping(value = "/v1/trade/placeOTOOrder")
-    BaseResponse<PlaceOrderResponse> placeOTOOrder(@Valid @RequestBody List<PlaceOrderRequest> request);
+    BaseResponse<PlaceOrderResponse> placeOTOOrder(@Validated @RequestBody List<PlaceOrderRequest> request);
 
     @PostMapping("/v1/trade/cancelOrder")
     BaseResponse cancelOrder(@RequestBody CancelOrderRequest request);

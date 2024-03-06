@@ -2,30 +2,12 @@ package com.crypto.jtrade.core.api;
 
 import java.util.List;
 
-import javax.validation.Valid;
-
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.crypto.jtrade.common.model.BaseResponse;
-import com.crypto.jtrade.core.api.model.AdjustPositionMarginRequest;
-import com.crypto.jtrade.core.api.model.AssetInfoRequest;
-import com.crypto.jtrade.core.api.model.CancelOrderRequest;
-import com.crypto.jtrade.core.api.model.ClientFeeRateRequest;
-import com.crypto.jtrade.core.api.model.ClientSettingRequest;
-import com.crypto.jtrade.core.api.model.DepositRequest;
-import com.crypto.jtrade.core.api.model.EmptyRequest;
-import com.crypto.jtrade.core.api.model.FundingRateRequest;
-import com.crypto.jtrade.core.api.model.LiquidationCancelOrderRequest;
-import com.crypto.jtrade.core.api.model.MarkPriceRequest;
-import com.crypto.jtrade.core.api.model.OTCRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderRequest;
-import com.crypto.jtrade.core.api.model.PlaceOrderResponse;
-import com.crypto.jtrade.core.api.model.SymbolIndicatorRequest;
-import com.crypto.jtrade.core.api.model.SymbolInfoRequest;
-import com.crypto.jtrade.core.api.model.SystemParameterRequest;
-import com.crypto.jtrade.core.api.model.TradeAuthorityRequest;
-import com.crypto.jtrade.core.api.model.WithdrawRequest;
+import com.crypto.jtrade.core.api.model.*;
 
 import feign.Headers;
 import feign.RequestLine;
@@ -88,7 +70,7 @@ public interface TradeApi {
 
     @PostMapping(value = "/v1/trade/placeOrder")
     @RequestLine("POST /v1/trade/placeOrder")
-    BaseResponse<PlaceOrderResponse> placeOrder(@Valid @RequestBody PlaceOrderRequest request);
+    BaseResponse<PlaceOrderResponse> placeOrder(@Validated @RequestBody PlaceOrderRequest request);
 
     @PostMapping(value = "/v1/trade/cancelOrder")
     @RequestLine("POST /v1/trade/cancelOrder")
@@ -108,6 +90,6 @@ public interface TradeApi {
 
     @PostMapping(value = "/v1/trade/placeOTOOrder")
     @RequestLine("POST /v1/trade/placeOTOOrder")
-    BaseResponse<PlaceOrderResponse> placeOTOOrder(@Valid @RequestBody List<PlaceOrderRequest> request);
+    BaseResponse<PlaceOrderResponse> placeOTOOrder(@Validated @RequestBody List<PlaceOrderRequest> request);
 
 }

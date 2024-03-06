@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="http://maven.apache.org/POM/4.0.0"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <artifactId>jtrade</artifactId>
-    
+
     <repositories>
         <repository>
             <id>jtrade</id>
@@ -11,7 +11,7 @@
             <url>http://maven.crypto.site/repository/maven-public/</url>
         </repository>
     </repositories>
-    
+
     <distributionManagement>
         <repository>
             <id>release</id>
@@ -24,7 +24,7 @@
             <url>http://maven.crypto.site/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
-    
+
     <build>
         <pluginManagement>
             <plugins>
@@ -33,7 +33,7 @@
                     <groupId>org.springframework.boot</groupId>
                     <version>${spring-boot.version}</version>
                 </plugin>
-                
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -42,11 +42,11 @@
                         <target>1.8</target>
                     </configuration>
                 </plugin>
-            
+
             </plugins>
         </pluginManagement>
     </build>
-    
+
     <dependencyManagement>
         <dependencies>
             <!--begin jtrade module-->
@@ -81,7 +81,7 @@
                 <version>${jtrade.version}</version>
             </dependency>
             <!--end jtrade module-->
-            
+
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-configuration-processor</artifactId>
@@ -104,6 +104,11 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-validation</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-amqp</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
@@ -122,7 +127,7 @@
                 <groupId>org.redisson</groupId>
                 <version>${redission-starter.version}</version>
             </dependency>
-            
+
             <dependency>
                 <artifactId>fastjson</artifactId>
                 <groupId>com.alibaba</groupId>
@@ -216,7 +221,7 @@
                 <version>${mapstruct.version}</version>
                 <scope>compile</scope>
             </dependency>
-            
+
             <dependency>
                 <artifactId>mysql-connector-java</artifactId>
                 <groupId>mysql</groupId>
@@ -228,7 +233,7 @@
                 <artifactId>pagehelper-spring-boot-starter</artifactId>
                 <version>${pagehelper.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>de.ruedigermoeller</groupId>
                 <artifactId>fst</artifactId>
@@ -244,7 +249,7 @@
                 <artifactId>netty-all</artifactId>
                 <version>${netty.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.web3j</groupId>
                 <artifactId>crypto</artifactId>
@@ -255,10 +260,30 @@
                 <artifactId>core</artifactId>
                 <version>${web3j.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.springframework.amqp</groupId>
+                <artifactId>spring-rabbit-stream</artifactId>
+                <version>${spring-amqp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>maven-plugin</type>
+            </dependency>
         </dependencies>
     </dependencyManagement>
-    
-    
+
+
     <groupId>com.crypto.jtrade</groupId>
     <modelVersion>4.0.0</modelVersion>
     <modules>
@@ -267,23 +292,23 @@
         <module>jtrade-front</module>
         <module>jtrade-sinkdb</module>
     </modules>
-    
+
     <packaging>pom</packaging>
     <parent>
         <artifactId>spring-boot-starter-parent</artifactId>
         <groupId>org.springframework.boot</groupId>
-        <version>2.2.13.RELEASE</version>
+        <version>2.7.18</version>
     </parent>
     <properties>
         <jtrade.version>1.0.0</jtrade.version>
         <com.squareup.retrofit2.version>2.7.0</com.squareup.retrofit2.version>
         <commons-collections4.version>4.3</commons-collections4.version>
         <commons-codec.version>1.12</commons-codec.version>
-        <spring-boot.version>2.2.13.RELEASE</spring-boot.version>
+        <spring-boot.version>2.7.18</spring-boot.version>
         <redission-starter.version>3.11.0</redission-starter.version>
         <fastjson.version>2.0.41</fastjson.version>
         <hutool.version>4.4.5</hutool.version>
-        <okhttp.version>3.14.1</okhttp.version>
+        <okhttp.version>4.9.3</okhttp.version>
         <feign.version>10.1.0</feign.version>
         <disruptor.version>3.4.2</disruptor.version>
         <caffeine.version>2.7.0</caffeine.version>
@@ -296,6 +321,8 @@
         <commons.pool2.version>2.11.1</commons.pool2.version>
         <netty.version>4.1.50.Final</netty.version>
         <web3j.version>4.5.11</web3j.version>
+        <junit.version>4.13.2</junit.version>
+        <spring-amqp.version>2.4.17</spring-amqp.version>
     </properties>
     <version>1.0.0</version>
 

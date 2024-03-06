@@ -58,11 +58,11 @@ jtrade:
     ping-interval-seconds: 60
     flush-interval-milli-seconds: 100
 
-    public-queue: jtrade.queue.push.public
+    public-queue: jtrade.queue.stream.public
     public-websocket-port: 9505
     public-stream-worker-size: 3
 
-    private-queue: jtrade.queue.push.private
+    private-queue: jtrade.queue.stream.private
     private-websocket-port: 9506
     private-stream-worker-size: 3
 

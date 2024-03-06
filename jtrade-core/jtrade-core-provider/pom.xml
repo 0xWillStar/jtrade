@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>jtrade-core</artifactId>
         <groupId>com.crypto.jtrade</groupId>
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    
+
     <artifactId>jtrade-core-provider</artifactId>
     <dependencies>
         <dependency>
-            <artifactId>jtrade-common</artifactId>
             <groupId>com.crypto.jtrade</groupId>
+            <artifactId>jtrade-common</artifactId>
         </dependency>
         <dependency>
-            <artifactId>jtrade-core-api</artifactId>
             <groupId>com.crypto.jtrade</groupId>
+            <artifactId>jtrade-core-api</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -38,6 +38,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
         <dependency>
@@ -48,7 +52,7 @@
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
         </dependency>
-        
+
         <dependency>
             <artifactId>lombok</artifactId>
             <groupId>org.projectlombok</groupId>
@@ -96,7 +100,7 @@
             <artifactId>mapstruct-processor</artifactId>
             <scope>compile</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -109,26 +113,30 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.amqp</groupId>
+            <artifactId>spring-rabbit-stream</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-    
+
     <build>
         <finalName>jtrade-core</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>springloaded</artifactId>
-                        <version>1.2.5.RELEASE</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>
-    
-    
+
+
     <profiles>
         <profile>
             <id>dev</id>
