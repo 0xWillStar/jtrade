@@ -12,7 +12,7 @@ public interface MessageClosure {
     /**
      * called when sending data
      */
-    void addToBatch(String data, boolean trySend);
+    void publish(String data, boolean trySend);
 
     /**
      * publish data to queue

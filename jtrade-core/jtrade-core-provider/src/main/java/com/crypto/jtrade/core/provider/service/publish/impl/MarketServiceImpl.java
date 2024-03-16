@@ -18,17 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.crypto.jtrade.common.constants.CommandIdentity;
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.KlinePeriod;
-import com.crypto.jtrade.common.constants.StreamChannel;
-import com.crypto.jtrade.common.constants.SymbolStatus;
+import com.crypto.jtrade.common.constants.*;
 import com.crypto.jtrade.common.exception.TradeException;
-import com.crypto.jtrade.common.model.Kline;
-import com.crypto.jtrade.common.model.StreamArgument;
-import com.crypto.jtrade.common.model.SymbolInfo;
-import com.crypto.jtrade.common.model.Ticker;
-import com.crypto.jtrade.common.model.Trade;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.StreamUtils;
 import com.crypto.jtrade.common.util.TimerManager;
 import com.crypto.jtrade.common.util.Utils;
@@ -504,7 +496,7 @@ public class MarketServiceImpl implements MarketService {
         if (toQueue) {
             messageClosure.publishToQueue(CommandIdentity.PUBLISH_RAW, content);
         } else {
-            messageClosure.addToBatch(content, false);
+            messageClosure.publish(content, false);
         }
     }
 
@@ -530,7 +522,7 @@ public class MarketServiceImpl implements MarketService {
         if (toQueue) {
             messageClosure.publishToQueue(CommandIdentity.PUBLISH_RAW, content);
         } else {
-            messageClosure.addToBatch(content, false);
+            messageClosure.publish(content, false);
         }
     }
 
@@ -540,7 +532,7 @@ public class MarketServiceImpl implements MarketService {
     private void pushTrade(Trade trade) {
         StreamArgument argument = new StreamArgument(StreamChannel.TRADE.getCode(), trade.getSymbol());
         String content = StreamUtils.getJSONString(argument.toJSONString(), trade.toJSONString());
-        messageClosure.addToBatch(content, true);
+        messageClosure.publish(content, true);
     }
 
     /**

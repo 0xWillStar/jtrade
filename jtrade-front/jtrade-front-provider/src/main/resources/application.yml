@@ -35,8 +35,10 @@ spring:
   rabbitmq:
     host: 127.0.0.1
     port: 5672
-    username: guest
-    password: guest
+    username: admin
+    password: admin
+    listener:
+      type: stream
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
@@ -59,10 +61,12 @@ jtrade:
     flush-interval-milli-seconds: 100
 
     public-queue: jtrade.queue.stream.public
+    public-consumer-name: public-consumer
     public-websocket-port: 9505
     public-stream-worker-size: 3
 
     private-queue: jtrade.queue.stream.private
+    private-consumer-name: private-consumer
     private-websocket-port: 9506
     private-stream-worker-size: 3
 

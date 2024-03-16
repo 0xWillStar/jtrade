@@ -7,23 +7,12 @@ import javax.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.rabbit.stream.producer.RabbitStreamTemplate;
 import org.springframework.stereotype.Service;
 
-import com.crypto.jtrade.common.constants.CommandIdentity;
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.MatchRole;
-import com.crypto.jtrade.common.constants.StreamChannel;
-import com.crypto.jtrade.common.constants.WorkingType;
-import com.crypto.jtrade.common.model.Depth;
-import com.crypto.jtrade.common.model.FundingRate;
-import com.crypto.jtrade.common.model.MarkPrice;
-import com.crypto.jtrade.common.model.StreamArgument;
-import com.crypto.jtrade.common.model.Trade;
-import com.crypto.jtrade.common.util.DisruptorBuilder;
-import com.crypto.jtrade.common.util.LogExceptionHandler;
-import com.crypto.jtrade.common.util.NamedThreadFactory;
-import com.crypto.jtrade.common.util.StreamUtils;
-import com.crypto.jtrade.common.util.TimerManager;
+import com.crypto.jtrade.common.constants.*;
+import com.crypto.jtrade.common.model.*;
+import com.crypto.jtrade.common.util.*;
 import com.crypto.jtrade.core.provider.config.CoreConfig;
 import com.crypto.jtrade.core.provider.model.queue.PublishEvent;
 import com.crypto.jtrade.core.provider.model.queue.TriggerPriceEvent;
@@ -34,11 +23,8 @@ import com.crypto.jtrade.core.provider.service.publish.PublicPublish;
 import com.crypto.jtrade.core.provider.service.rabbitmq.BatchingService;
 import com.crypto.jtrade.core.provider.service.rabbitmq.MessageClosure;
 import com.crypto.jtrade.core.provider.service.stop.StopService;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslator;
-import com.lmax.disruptor.RingBuffer;
+import com.crypto.jtrade.core.provider.util.MessageUtil;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -70,14 +56,21 @@ public class PublicPublishImpl extends BatchingService implements PublicPublish 
     @Autowired
     private StopService stopService;
 
+    private final boolean rabbitStream;
+
+    @Autowired
+    private RabbitStreamTemplate publicStreamTemplate;
+
     private Disruptor<PublishEvent> publicPublishDisruptor;
 
     private RingBuffer<PublishEvent> publicPublishQueue;
 
     @Autowired
-    public PublicPublishImpl(RabbitTemplate rabbitTemplate, CoreConfig coreConfig) {
+    public PublicPublishImpl(RabbitTemplate rabbitTemplate, CoreConfig coreConfig,
+        @Value("${spring.rabbitmq.listener.type}") String listenerType) {
         super(rabbitTemplate, coreConfig.getPublicPublishMaxBatchSize(), Constants.MQ_EXCHANGE_STREAM_PUBLIC, null);
         this.coreConfig = coreConfig;
+        this.rabbitStream = "stream".equals(listenerType);
     }
 
     @PostConstruct
@@ -182,12 +175,16 @@ public class PublicPublishImpl extends BatchingService implements PublicPublish 
     private void publishDepthHandler(Depth depth) {
         StreamArgument argument = new StreamArgument(StreamChannel.DEPTH.getCode(), depth.getSymbol());
         String content = StreamUtils.getJSONString(argument.toJSONString(), depth.toJSONString());
-        addToBatch(content, false);
-        /**
-         * Pushing the depth from the matching engine is not real-time, but at intervals, so real-time push is required
-         * here.
-         */
-        sendData();
+        if (rabbitStream) {
+            MessageUtil.send(publicStreamTemplate, content);
+        } else {
+            addToBatch(content, false);
+            /**
+             * Pushing the depth from the matching engine is not real-time, but at intervals, so real-time push is
+             * required here.
+             */
+            sendData();
+        }
     }
 
     /**
@@ -210,7 +207,11 @@ public class PublicPublishImpl extends BatchingService implements PublicPublish 
         // public publish
         StreamArgument argument = new StreamArgument(StreamChannel.MARK_PRICE.getCode(), markPrice.getSymbol());
         String content = StreamUtils.getJSONString(argument.toJSONString(), markPrice.toJSONString());
-        addToBatch(content, true);
+        if (rabbitStream) {
+            MessageUtil.send(publicStreamTemplate, content);
+        } else {
+            addToBatch(content, true);
+        }
     }
 
     /**
@@ -219,7 +220,11 @@ public class PublicPublishImpl extends BatchingService implements PublicPublish 
     private void publishFundingRateHandler(FundingRate fundingRate) {
         StreamArgument argument = new StreamArgument(StreamChannel.FUNDING_RATE.getCode(), fundingRate.getSymbol());
         String content = StreamUtils.getJSONString(argument.toJSONString(), fundingRate.toJSONString());
-        addToBatch(content, true);
+        if (rabbitStream) {
+            MessageUtil.send(publicStreamTemplate, content);
+        } else {
+            addToBatch(content, true);
+        }
     }
 
     /**
@@ -233,8 +238,10 @@ public class PublicPublishImpl extends BatchingService implements PublicPublish 
      * init public publish timer
      */
     private void initPublicPublishTimer() {
-        int interval = coreConfig.getPublicPublishIntervalMilliSeconds();
-        TimerManager.scheduleAtFixedRate(() -> onTimePublicPublish(), interval, interval, TimeUnit.MILLISECONDS);
+        if (!rabbitStream) {
+            int interval = coreConfig.getPublicPublishIntervalMilliSeconds();
+            TimerManager.scheduleAtFixedRate(() -> onTimePublicPublish(), interval, interval, TimeUnit.MILLISECONDS);
+        }
     }
 
     /**
@@ -280,8 +287,12 @@ public class PublicPublishImpl extends BatchingService implements PublicPublish 
         }
 
         @Override
-        public void addToBatch(String data, boolean trySend) {
-            PublicPublishImpl.this.addToBatch(data, trySend);
+        public void publish(String data, boolean trySend) {
+            if (PublicPublishImpl.this.rabbitStream) {
+                MessageUtil.send(PublicPublishImpl.this.publicStreamTemplate, data);
+            } else {
+                PublicPublishImpl.this.addToBatch(data, trySend);
+            }
         }
 
         @Override

@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.rabbit.stream.producer.RabbitStreamTemplate;
 import org.springframework.stereotype.Service;
 
 import com.crypto.jtrade.common.constants.CommandIdentity;
@@ -29,11 +30,8 @@ import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
 import com.crypto.jtrade.core.provider.service.oto.OTOService;
 import com.crypto.jtrade.core.provider.service.publish.PrivatePublish;
 import com.crypto.jtrade.core.provider.service.rabbitmq.BatchingService;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslator;
-import com.lmax.disruptor.RingBuffer;
+import com.crypto.jtrade.core.provider.util.MessageUtil;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -60,6 +58,11 @@ public class PrivatePublishImpl extends BatchingService implements PrivatePublis
     @Autowired
     private OTOService otoService;
 
+    private final boolean rabbitStream;
+
+    @Autowired
+    private RabbitStreamTemplate privateStreamTemplate;
+
     private CoreConfig coreConfig;
 
     private Long rabbitBatchId;
@@ -69,9 +72,11 @@ public class PrivatePublishImpl extends BatchingService implements PrivatePublis
     private RingBuffer<PublishEvent> privatePublishQueue;
 
     @Autowired
-    public PrivatePublishImpl(RabbitTemplate rabbitTemplate, CoreConfig coreConfig) {
+    public PrivatePublishImpl(RabbitTemplate rabbitTemplate, CoreConfig coreConfig,
+        @Value("${spring.rabbitmq.listener.type}") String listenerType) {
         super(rabbitTemplate, coreConfig.getPublicPublishMaxBatchSize(), Constants.MQ_EXCHANGE_STREAM_PRIVATE, null);
         this.coreConfig = coreConfig;
+        this.rabbitStream = "stream".equals(listenerType);
     }
 
     @PostConstruct
@@ -146,7 +151,12 @@ public class PrivatePublishImpl extends BatchingService implements PrivatePublis
      * publish complex handler
      */
     private void publishComplexHandler(ComplexEntity complexEntity) {
-        addToBatch(complexEntity.toJSONString(), true);
+        if (rabbitStream) {
+            MessageUtil.send(privateStreamTemplate, complexEntity.toJSONString());
+        } else {
+            addToBatch(complexEntity.toJSONString(), true);
+        }
+        // OTO order
         Order order = complexEntity.getOrder();
         if (order != null && order.getOtoOrderType() != OTOOrderType.NONE) {
             otoService.receiveOTOEvent(complexEntity);
@@ -159,11 +169,19 @@ public class PrivatePublishImpl extends BatchingService implements PrivatePublis
     private void publishFundingFeeHandler(FundingFeeLanding fundingFeeLanding) {
         for (AssetBalance balance : fundingFeeLanding.getBalances()) {
             ComplexEntity complexEntity = new ComplexEntity(null, Collections.singletonList(balance), null, null, null);
-            addToBatch(complexEntity.toJSONString(), true);
+            if (rabbitStream) {
+                MessageUtil.send(privateStreamTemplate, complexEntity.toJSONString());
+            } else {
+                addToBatch(complexEntity.toJSONString(), true);
+            }
         }
         for (Bill bill : fundingFeeLanding.getBills()) {
             ComplexEntity complexEntity = new ComplexEntity(null, null, null, null, Collections.singletonList(bill));
-            addToBatch(complexEntity.toJSONString(), true);
+            if (rabbitStream) {
+                MessageUtil.send(privateStreamTemplate, complexEntity.toJSONString());
+            } else {
+                addToBatch(complexEntity.toJSONString(), true);
+            }
         }
     }
 
@@ -178,8 +196,10 @@ public class PrivatePublishImpl extends BatchingService implements PrivatePublis
      * init private publish timer
      */
     private void initPrivatePublishTimer() {
-        int interval = coreConfig.getPrivatePublishIntervalMilliSeconds();
-        TimerManager.scheduleAtFixedRate(() -> onTimePrivatePublish(), interval, interval, TimeUnit.MILLISECONDS);
+        if (!rabbitStream) {
+            int interval = coreConfig.getPrivatePublishIntervalMilliSeconds();
+            TimerManager.scheduleAtFixedRate(() -> onTimePrivatePublish(), interval, interval, TimeUnit.MILLISECONDS);
+        }
     }
 
     /**

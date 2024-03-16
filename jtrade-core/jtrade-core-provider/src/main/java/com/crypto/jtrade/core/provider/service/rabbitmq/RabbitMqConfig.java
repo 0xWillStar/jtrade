@@ -1,18 +1,21 @@
 package com.crypto.jtrade.core.provider.service.rabbitmq;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.FanoutExchange;
-import org.springframework.amqp.core.Queue;
+import java.time.Duration;
+
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
+import org.springframework.boot.autoconfigure.amqp.RabbitStreamTemplateConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.rabbit.stream.producer.RabbitStreamTemplate;
+import org.springframework.rabbit.stream.support.StreamAdmin;
 
 import com.crypto.jtrade.common.constants.Constants;
+import com.rabbitmq.stream.Environment;
 
 /**
  * rabbit mq config
@@ -77,6 +80,32 @@ public class RabbitMqConfig {
     @Bean
     public Binding privateStreamBinding() {
         return BindingBuilder.bind(privateStreamQueue()).to(privateStreamExchange());
+    }
+
+    @Bean
+    public StreamAdmin streamAdmin(Environment env) {
+        return new StreamAdmin(env, sc -> {
+            sc.stream(Constants.MQ_CORE_STREAM_PUBLIC).maxAge(Duration.ofDays(2)).create();
+            sc.stream(Constants.MQ_CORE_STREAM_PRIVATE).maxAge(Duration.ofDays(2)).create();
+        });
+    }
+
+    @Bean("publicStreamTemplate")
+    public RabbitStreamTemplate publicStreamTemplate(Environment rabbitStreamEnvironment, RabbitProperties properties,
+        RabbitStreamTemplateConfigurer configurer) {
+        RabbitStreamTemplate template =
+            new RabbitStreamTemplate(rabbitStreamEnvironment, Constants.MQ_CORE_STREAM_PUBLIC);
+        configurer.configure(template);
+        return template;
+    }
+
+    @Bean("privateStreamTemplate")
+    public RabbitStreamTemplate privateStreamTemplate(Environment rabbitStreamEnvironment, RabbitProperties properties,
+        RabbitStreamTemplateConfigurer configurer) {
+        RabbitStreamTemplate template =
+            new RabbitStreamTemplate(rabbitStreamEnvironment, Constants.MQ_CORE_STREAM_PRIVATE);
+        configurer.configure(template);
+        return template;
     }
 
 }

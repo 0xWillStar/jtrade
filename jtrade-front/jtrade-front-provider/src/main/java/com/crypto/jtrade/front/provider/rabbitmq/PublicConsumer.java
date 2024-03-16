@@ -1,22 +1,21 @@
 package com.crypto.jtrade.front.provider.rabbitmq;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
 
-import org.springframework.amqp.core.Message;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.crypto.jtrade.common.constants.Constants;
 import com.crypto.jtrade.common.constants.KlinePeriod;
 import com.crypto.jtrade.common.constants.StreamChannel;
 import com.crypto.jtrade.front.provider.cache.PublicCache;
@@ -48,50 +47,82 @@ public class PublicConsumer {
     @Autowired
     private PublicStreamManager publicStreamManager;
 
+    @Value("${spring.rabbitmq.listener.type}")
+    private String listenerType;
+
     @PostConstruct
     public void init() {
-        try (Connection connection = connectionFactory.createConnection();
-            Channel channel = connection.createChannel(false)) {
-            // delete old public messages
-            channel.queuePurge(frontConfig.getPublicQueue());
-
-            // init kline and trade cache
-            publicCache.initKlineCache();
-            publicCache.initTradeCache();
-        } catch (TimeoutException | IOException e) {
-            log.error("public consumer init error: {}", e.getMessage(), e);
+        if (!"stream".equals(listenerType)) {
+            try (Connection connection = connectionFactory.createConnection();
+                Channel channel = connection.createChannel(false)) {
+                // delete old public messages
+                channel.queuePurge(frontConfig.getPublicQueue());
+            } catch (TimeoutException | IOException e) {
+                log.error("public consumer init error: {}", e.getMessage(), e);
+            }
         }
+        // init kline and trade cache
+        publicCache.initKlineCache();
+        publicCache.initTradeCache();
     }
 
-    @RabbitListener(queues = "${jtrade.front.public-queue}", containerFactory = "batchRabbitListenerContainerFactory")
-    public void onMessageBatch(List<Message> list, Channel channel) throws IOException {
-        if (CollectionUtils.isEmpty(list)) {
+    @RabbitListener(queues = Constants.MQ_CORE_STREAM_PUBLIC, containerFactory = "publicStreamListenerFactory")
+    public void onMessageStream(String message) {
+        if (StringUtils.isEmpty(message)) {
             return;
         }
-        for (Message message : list) {
-            String str = new String(message.getBody(), StandardCharsets.UTF_8);
-            /**
-             * the json format is as follows: { "arg": { "channel": "ticker", "symbol": "ETH-USDC" }, "data": {
-             * "lastPrice": 1918, "lastQty": 0.1, "openPrice": 1918, ...... } }
-             */
-            JSONObject jsonMessage = JSONObject.parseObject(str);
-            JSONObject jsonArg = jsonMessage.getJSONObject("arg");
-            String symbol = jsonArg.getString("symbol");
-            String origStreamChannel = jsonArg.getString("channel");
-            StreamChannel streamChannel = StreamChannel.fromCode(origStreamChannel);
-            Object data;
-            if (streamChannel == StreamChannel.KLINE) {
-                data = jsonMessage.getJSONArray("data");
-            } else {
-                data = jsonMessage.getJSONObject("data");
-            }
-            // update local cache
-            updateLocalCache(symbol, streamChannel, origStreamChannel, data);
-            // websocket push
-            StreamRequestArg streamRequestArg = new StreamRequestArg(origStreamChannel, symbol);
-            publicStreamManager.push(streamRequestArg.toTopicString(), str);
+        /**
+         * the json format is as follows: { "arg": { "channel": "ticker", "symbol": "ETH-USDC" }, "data": { "lastPrice":
+         * 1918, "lastQty": 0.1, "openPrice": 1918, ...... } }
+         */
+        JSONObject jsonMessage = JSONObject.parseObject(message);
+        JSONObject jsonArg = jsonMessage.getJSONObject("arg");
+        String symbol = jsonArg.getString("symbol");
+        String origStreamChannel = jsonArg.getString("channel");
+        StreamChannel streamChannel = StreamChannel.fromCode(origStreamChannel);
+        Object data;
+        if (streamChannel == StreamChannel.KLINE) {
+            data = jsonMessage.getJSONArray("data");
+        } else {
+            data = jsonMessage.getJSONObject("data");
         }
+        // update local cache
+        updateLocalCache(symbol, streamChannel, origStreamChannel, data);
+        // websocket push
+        StreamRequestArg streamRequestArg = new StreamRequestArg(origStreamChannel, symbol);
+        publicStreamManager.push(streamRequestArg.toTopicString(), message);
     }
+
+    // @RabbitListener(queues = "${jtrade.front.public-queue}", containerFactory =
+    // "batchRabbitListenerContainerFactory")
+    // public void onMessageBatch(List<Message> list, Channel channel) throws IOException {
+    // if (CollectionUtils.isEmpty(list)) {
+    // return;
+    // }
+    // for (Message message : list) {
+    // String str = new String(message.getBody(), StandardCharsets.UTF_8);
+    // /**
+    // * the json format is as follows: { "arg": { "channel": "ticker", "symbol": "ETH-USDC" }, "data": {
+    // * "lastPrice": 1918, "lastQty": 0.1, "openPrice": 1918, ...... } }
+    // */
+    // JSONObject jsonMessage = JSONObject.parseObject(str);
+    // JSONObject jsonArg = jsonMessage.getJSONObject("arg");
+    // String symbol = jsonArg.getString("symbol");
+    // String origStreamChannel = jsonArg.getString("channel");
+    // StreamChannel streamChannel = StreamChannel.fromCode(origStreamChannel);
+    // Object data;
+    // if (streamChannel == StreamChannel.KLINE) {
+    // data = jsonMessage.getJSONArray("data");
+    // } else {
+    // data = jsonMessage.getJSONObject("data");
+    // }
+    // // update local cache
+    // updateLocalCache(symbol, streamChannel, origStreamChannel, data);
+    // // websocket push
+    // StreamRequestArg streamRequestArg = new StreamRequestArg(origStreamChannel, symbol);
+    // publicStreamManager.push(streamRequestArg.toTopicString(), str);
+    // }
+    // }
 
     /**
      * update local cache

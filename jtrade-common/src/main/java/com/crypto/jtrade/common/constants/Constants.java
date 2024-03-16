@@ -164,4 +164,8 @@ public final class Constants {
 
     public static final String MQ_EXCHANGE_STREAM_PRIVATE = "jtrade.exchange.stream.private";
 
+    public static final String MQ_CORE_STREAM_PUBLIC = "jtrade.core.stream.public";
+
+    public static final String MQ_CORE_STREAM_PRIVATE = "jtrade.core.stream.private";
+
 }
