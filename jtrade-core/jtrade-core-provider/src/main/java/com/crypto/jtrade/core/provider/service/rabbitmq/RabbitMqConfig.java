@@ -85,8 +85,8 @@ public class RabbitMqConfig {
     @Bean
     public StreamAdmin streamAdmin(Environment env) {
         return new StreamAdmin(env, sc -> {
-            sc.stream(Constants.MQ_CORE_STREAM_PUBLIC).maxAge(Duration.ofDays(2)).create();
-            sc.stream(Constants.MQ_CORE_STREAM_PRIVATE).maxAge(Duration.ofDays(2)).create();
+            sc.stream(Constants.MQ_CORE_STREAM_PUBLIC).maxAge(Duration.ofMinutes(3)).create();
+            sc.stream(Constants.MQ_CORE_STREAM_PRIVATE).maxAge(Duration.ofMinutes(3)).create();
         });
     }
 
