@@ -2,14 +2,7 @@ package com.crypto.jtrade.core.provider.service.query;
 
 import java.util.List;
 
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.Depth;
-import com.crypto.jtrade.common.model.Kline;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolIndicator;
-import com.crypto.jtrade.common.model.SymbolInfo;
-import com.crypto.jtrade.common.model.Ticker;
+import com.crypto.jtrade.common.model.*;
 
 /**
  * Query service
@@ -17,6 +10,11 @@ import com.crypto.jtrade.common.model.Ticker;
  * @author 0xWill
  **/
 public interface QueryService {
+
+    /**
+     * get symbol
+     */
+    SymbolInfo getSymbol(String symbol);
 
     /**
      * get symbols

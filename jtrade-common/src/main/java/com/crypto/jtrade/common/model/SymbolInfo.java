@@ -6,12 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.crypto.jtrade.common.annotation.MyField;
 import com.crypto.jtrade.common.annotation.MyType;
-import com.crypto.jtrade.common.constants.MarginPriceType;
-import com.crypto.jtrade.common.constants.OptionsType;
-import com.crypto.jtrade.common.constants.PositionType;
-import com.crypto.jtrade.common.constants.ProductType;
-import com.crypto.jtrade.common.constants.SymbolStatus;
-import com.crypto.jtrade.common.constants.TradePriceMode;
+import com.crypto.jtrade.common.constants.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
@@ -104,7 +99,6 @@ public class SymbolInfo {
     /**
      * impactValue used for calculating fundingRate
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private BigDecimal impactValue;
 
     public String toString() {

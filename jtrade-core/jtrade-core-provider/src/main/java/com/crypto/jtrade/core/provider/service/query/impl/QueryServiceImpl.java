@@ -9,14 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.crypto.jtrade.common.constants.KlinePeriod;
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.Depth;
-import com.crypto.jtrade.common.model.Kline;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolIndicator;
-import com.crypto.jtrade.common.model.SymbolInfo;
-import com.crypto.jtrade.common.model.Ticker;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.core.provider.model.convert.BeanMapping;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.query.QueryService;
@@ -38,6 +31,14 @@ public class QueryServiceImpl implements QueryService {
 
     @Autowired
     private BeanMapping beanMapping;
+
+    /**
+     * get symbol
+     */
+    @Override
+    public SymbolInfo getSymbol(String symbol) {
+        return localCache.getSymbolInfo(symbol);
+    }
 
     /**
      * get symbols

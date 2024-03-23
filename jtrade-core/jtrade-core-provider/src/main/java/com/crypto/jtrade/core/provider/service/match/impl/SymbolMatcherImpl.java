@@ -1,48 +1,32 @@
 package com.crypto.jtrade.core.provider.service.match.impl;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
-import com.crypto.jtrade.core.provider.model.convert.BeanMapping;
-import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
-import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
-import com.crypto.jtrade.core.provider.service.match.SymbolMatcher;
-import com.crypto.jtrade.core.provider.service.publish.PrivatePublish;
-import com.crypto.jtrade.core.provider.service.publish.PublicPublish;
-import com.crypto.jtrade.core.provider.util.ClientLockHelper;
-import com.crypto.jtrade.core.provider.util.SequenceHelper;
-import com.crypto.jtrade.core.provider.util.TradeSessionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.crypto.jtrade.common.constants.CommandIdentity;
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.MatchRole;
-import com.crypto.jtrade.common.constants.OrderSide;
-import com.crypto.jtrade.common.constants.OrderType;
-import com.crypto.jtrade.common.constants.TimeInForce;
-import com.crypto.jtrade.common.constants.TradeType;
-import com.crypto.jtrade.common.model.Bill;
-import com.crypto.jtrade.common.model.ComplexEntity;
-import com.crypto.jtrade.common.model.Depth;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.SymbolInfo;
+import com.crypto.jtrade.common.constants.*;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.core.provider.config.CoreConfig;
+import com.crypto.jtrade.core.provider.model.convert.BeanMapping;
 import com.crypto.jtrade.core.provider.model.landing.MatchedLandings;
 import com.crypto.jtrade.core.provider.model.landing.OrderMatchedLanding;
 import com.crypto.jtrade.core.provider.model.session.TradeSession;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
+import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
+import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
+import com.crypto.jtrade.core.provider.service.match.SymbolMatcher;
+import com.crypto.jtrade.core.provider.service.publish.PrivatePublish;
+import com.crypto.jtrade.core.provider.service.publish.PublicPublish;
 import com.crypto.jtrade.core.provider.service.rule.TradeRule;
 import com.crypto.jtrade.core.provider.service.rule.TradeRuleManager;
+import com.crypto.jtrade.core.provider.util.ClientLockHelper;
+import com.crypto.jtrade.core.provider.util.SequenceHelper;
+import com.crypto.jtrade.core.provider.util.TradeSessionHelper;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -109,8 +93,6 @@ public class SymbolMatcherImpl implements SymbolMatcher {
             return;
         }
 
-        long priceLong = order.getPrice().movePointRight(Constants.MAX_DECIMAL).longValue();
-
         BigDecimal fillPrice;
         BigDecimal fillQty;
         if (order.getSide() == OrderSide.BUY) {
@@ -153,6 +135,7 @@ public class SymbolMatcherImpl implements SymbolMatcher {
                     /**
                      * Add to the buy collection
                      */
+                    long priceLong = order.getPrice().movePointRight(Constants.MAX_DECIMAL).longValue();
                     BuyOrderKey buyOrderKey = new BuyOrderKey(priceLong, order.getOrderId());
                     buyOrders.put(buyOrderKey, order);
                     publishDepthSides = publishDepthSides | Constants.USE_BUY;
@@ -230,6 +213,7 @@ public class SymbolMatcherImpl implements SymbolMatcher {
                     /**
                      * Add to the sell collection
                      */
+                    long priceLong = order.getPrice().movePointRight(Constants.MAX_DECIMAL).longValue();
                     SellOrderKey sellOrderKey = new SellOrderKey(priceLong, order.getOrderId());
                     sellOrders.put(sellOrderKey, order);
                     publishDepthSides = publishDepthSides | Constants.USE_SELL;
