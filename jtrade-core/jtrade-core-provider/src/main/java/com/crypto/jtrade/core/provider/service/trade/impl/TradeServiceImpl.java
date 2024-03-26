@@ -515,8 +515,13 @@ public class TradeServiceImpl implements TradeService {
             /**
              * secondary order
              */
+            int i = 0;
             for (PlaceOrderRequest orderRequest : secondaryRequests) {
                 session.setOrder(null);
+                if (++i == 2) {
+                    session.setSubOrderId1(subOrderId2);
+                    session.setSubOrderId2(subOrderId1);
+                }
                 for (TradeRule rule : tradeRules) {
                     rule.placeOrder(orderRequest, session);
                 }

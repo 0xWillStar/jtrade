@@ -143,8 +143,7 @@ public class OTOServiceImpl implements OTOService {
      * trigger secondary order
      */
     private void triggerSecondaryOrder(Long orderId, Order order) {
-        Order secondaryOrder =
-            localCache.getClientEntity(order.getClientId()).getOrderByOrderId(String.valueOf(orderId));
+        Order secondaryOrder = localCache.getClientEntity(order.getClientId()).getOrderByOrderId(orderId);
         if (secondaryOrder != null) {
             tradeCommand.triggerSecondaryOrder(secondaryOrder);
         }

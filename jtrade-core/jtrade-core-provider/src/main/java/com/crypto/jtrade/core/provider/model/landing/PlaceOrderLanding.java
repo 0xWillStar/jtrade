@@ -23,6 +23,8 @@ public class PlaceOrderLanding {
 
     private Order order;
 
+    private DataAction orderAction;
+
     private Position position;
 
     private DataAction positionAction;

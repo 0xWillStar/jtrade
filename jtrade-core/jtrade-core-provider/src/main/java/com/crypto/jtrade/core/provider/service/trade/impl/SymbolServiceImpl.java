@@ -29,6 +29,7 @@ import com.crypto.jtrade.core.api.model.OTCRequest;
 import com.crypto.jtrade.core.provider.model.landing.SymbolInfoLanding;
 import com.crypto.jtrade.core.provider.service.cache.ClientEntity;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
+import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
 import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
 import com.crypto.jtrade.core.provider.service.match.MatchEngineManager;
 import com.crypto.jtrade.core.provider.service.publish.MarketService;
@@ -57,6 +58,9 @@ public class SymbolServiceImpl implements SymbolService {
 
     @Autowired
     private RedisLanding redisLanding;
+
+    @Autowired
+    private MySqlLanding mySqlLanding;
 
     @Autowired
     private TradeCommand tradeCommand;
@@ -114,7 +118,10 @@ public class SymbolServiceImpl implements SymbolService {
                     }
                     if (updated) {
                         SymbolInfoLanding landing = new SymbolInfoLanding(null, symbolInfo);
+                        // write to redis
                         redisLanding.setSymbolInfo(landing);
+                        // write to mysql
+                        mySqlLanding.setSymbolInfo(landing);
                     }
                 }
             } finally {

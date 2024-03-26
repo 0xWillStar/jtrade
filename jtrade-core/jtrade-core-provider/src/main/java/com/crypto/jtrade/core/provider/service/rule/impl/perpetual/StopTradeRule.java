@@ -3,11 +3,7 @@ package com.crypto.jtrade.core.provider.service.rule.impl.perpetual;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.DataAction;
-import com.crypto.jtrade.common.constants.OTOOrderType;
-import com.crypto.jtrade.common.constants.OrderStatus;
-import com.crypto.jtrade.common.constants.OrderType;
+import com.crypto.jtrade.common.constants.*;
 import com.crypto.jtrade.common.model.ComplexEntity;
 import com.crypto.jtrade.common.model.Order;
 import com.crypto.jtrade.core.api.model.CancelOrderRequest;
@@ -108,8 +104,8 @@ public class StopTradeRule extends AbstractTradeRule {
         /**
          * save landing to redis
          */
-        PlaceOrderLanding landing = new PlaceOrderLanding(session.getRequestId(), cpOrder, null, null, null, null,
-            orderClientAction, session.isStopTriggered());
+        PlaceOrderLanding landing = new PlaceOrderLanding(session.getRequestId(), cpOrder, DataAction.INSERT, null,
+            null, null, null, orderClientAction, session.isStopTriggered());
         redisLanding.placeOrder(landing);
         /**
          * save landing to mysql
@@ -198,8 +194,8 @@ public class StopTradeRule extends AbstractTradeRule {
         /**
          * save landing to redis
          */
-        PlaceOrderLanding landing = new PlaceOrderLanding(session.getRequestId(), cpOrder, null, null, null, null,
-            DataAction.NONE, session.isStopTriggered());
+        PlaceOrderLanding landing = new PlaceOrderLanding(session.getRequestId(), cpOrder, DataAction.UPDATE, null,
+            null, null, null, DataAction.NONE, session.isStopTriggered());
         redisLanding.placeOrder(landing);
         /**
          * save landing to mysql

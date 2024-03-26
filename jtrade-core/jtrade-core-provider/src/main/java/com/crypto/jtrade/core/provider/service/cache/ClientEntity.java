@@ -2,11 +2,7 @@ package com.crypto.jtrade.core.provider.service.cache;
 
 import java.util.concurrent.ConcurrentMap;
 
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.ClientSetting;
-import com.crypto.jtrade.common.model.FeeRate;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.recycle.Recyclable;
 import com.crypto.jtrade.common.util.recycle.Recyclers;
 
@@ -153,7 +149,7 @@ public final class ClientEntity implements Recyclable {
         this.orders.put(order.getOrderId(), order);
     }
 
-    public Order getOrderByOrderId(String orderId) {
+    public Order getOrderByOrderId(Long orderId) {
         return this.orders.get(orderId);
     }
 

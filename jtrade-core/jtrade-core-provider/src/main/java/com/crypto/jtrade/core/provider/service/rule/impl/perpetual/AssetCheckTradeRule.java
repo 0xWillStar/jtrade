@@ -1,50 +1,24 @@
 package com.crypto.jtrade.core.provider.service.rule.impl.perpetual;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.crypto.jtrade.common.constants.BillType;
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.DataAction;
-import com.crypto.jtrade.common.constants.MarginType;
-import com.crypto.jtrade.common.constants.OTOOrderType;
-import com.crypto.jtrade.common.constants.OrderSide;
-import com.crypto.jtrade.common.constants.OrderStatus;
-import com.crypto.jtrade.common.constants.OrderType;
+import com.crypto.jtrade.common.constants.*;
 import com.crypto.jtrade.common.constants.SystemParameter;
 import com.crypto.jtrade.common.exception.TradeError;
 import com.crypto.jtrade.common.exception.TradeException;
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.AssetInfo;
-import com.crypto.jtrade.common.model.Bill;
-import com.crypto.jtrade.common.model.ClientSetting;
-import com.crypto.jtrade.common.model.ComplexEntity;
-import com.crypto.jtrade.common.model.Depth;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolIndicator;
-import com.crypto.jtrade.common.model.SymbolInfo;
+import com.crypto.jtrade.common.model.*;
 import com.crypto.jtrade.common.util.BigDecimalUtil;
 import com.crypto.jtrade.core.api.model.AdjustPositionMarginRequest;
 import com.crypto.jtrade.core.api.model.DepositRequest;
 import com.crypto.jtrade.core.api.model.PlaceOrderRequest;
 import com.crypto.jtrade.core.api.model.WithdrawRequest;
 import com.crypto.jtrade.core.provider.model.convert.BeanMapping;
-import com.crypto.jtrade.core.provider.model.landing.AdjustPositionMarginLanding;
-import com.crypto.jtrade.core.provider.model.landing.DeductCollateralLanding;
-import com.crypto.jtrade.core.provider.model.landing.DepositLanding;
-import com.crypto.jtrade.core.provider.model.landing.PlaceOrderLanding;
-import com.crypto.jtrade.core.provider.model.landing.WithdrawLanding;
+import com.crypto.jtrade.core.provider.model.landing.*;
 import com.crypto.jtrade.core.provider.model.session.OrderSession;
 import com.crypto.jtrade.core.provider.service.cache.ClientEntity;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
@@ -650,8 +624,9 @@ public class AssetCheckTradeRule extends AbstractTradeRule {
         /**
          * write to redis. Using constructor is more efficient than using builder.
          */
-        PlaceOrderLanding landing = new PlaceOrderLanding(session.getRequestId(), cpOrder, cpPosition, positionAction,
-            cpAssetBalance, session.getBalanceAction(), orderClientAction, session.isStopTriggered());
+        PlaceOrderLanding landing =
+            new PlaceOrderLanding(session.getRequestId(), cpOrder, DataAction.INSERT, cpPosition, positionAction,
+                cpAssetBalance, session.getBalanceAction(), orderClientAction, session.isStopTriggered());
         redisLanding.placeOrder(landing);
         /**
          * write to mysql

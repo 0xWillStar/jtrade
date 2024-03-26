@@ -5,22 +5,12 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
-import com.crypto.jtrade.core.provider.model.landing.AdjustPositionMarginLanding;
-import com.crypto.jtrade.core.provider.model.landing.ClientFeeRateLanding;
-import com.crypto.jtrade.core.provider.model.landing.SystemParameterLanding;
-import com.crypto.jtrade.core.provider.model.queue.LandingEvent;
-import com.crypto.jtrade.core.provider.service.rabbitmq.BatchingService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.crypto.jtrade.common.constants.CommandIdentity;
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.DataAction;
-import com.crypto.jtrade.common.constants.DataObject;
-import com.crypto.jtrade.common.constants.SystemParameter;
-import com.crypto.jtrade.common.constants.TradeType;
+import com.crypto.jtrade.common.constants.*;
 import com.crypto.jtrade.common.model.AssetBalance;
 import com.crypto.jtrade.common.model.Bill;
 import com.crypto.jtrade.common.model.FeeRate;
@@ -30,28 +20,13 @@ import com.crypto.jtrade.common.util.LogExceptionHandler;
 import com.crypto.jtrade.common.util.NamedThreadFactory;
 import com.crypto.jtrade.common.util.TimerManager;
 import com.crypto.jtrade.core.provider.config.CoreConfig;
-import com.crypto.jtrade.core.provider.model.landing.AssetInfoLanding;
-import com.crypto.jtrade.core.provider.model.landing.CancelOrderLanding;
-import com.crypto.jtrade.core.provider.model.landing.ClientSettingLanding;
-import com.crypto.jtrade.core.provider.model.landing.ClientTradeAuthorityLanding;
-import com.crypto.jtrade.core.provider.model.landing.DeductCollateralLanding;
-import com.crypto.jtrade.core.provider.model.landing.DepositLanding;
-import com.crypto.jtrade.core.provider.model.landing.FundingFeeLanding;
-import com.crypto.jtrade.core.provider.model.landing.MatchedLandings;
-import com.crypto.jtrade.core.provider.model.landing.MySqlOperation;
-import com.crypto.jtrade.core.provider.model.landing.OrderCanceledLanding;
-import com.crypto.jtrade.core.provider.model.landing.OrderMatchedLanding;
-import com.crypto.jtrade.core.provider.model.landing.PlaceOrderLanding;
-import com.crypto.jtrade.core.provider.model.landing.SymbolInfoLanding;
-import com.crypto.jtrade.core.provider.model.landing.WithdrawLanding;
+import com.crypto.jtrade.core.provider.model.landing.*;
+import com.crypto.jtrade.core.provider.model.queue.LandingEvent;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
 import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslator;
-import com.lmax.disruptor.RingBuffer;
+import com.crypto.jtrade.core.provider.service.rabbitmq.BatchingService;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -429,7 +404,7 @@ public class MySqlLandingImpl extends BatchingService implements MySqlLanding {
         }
         // Order
         MySqlOperation orderOperation =
-            new MySqlOperation(clientId, DataObject.ORDER, DataAction.INSERT, landing.getOrder().toString());
+            new MySqlOperation(clientId, DataObject.ORDER, landing.getOrderAction(), landing.getOrder().toString());
         addToBatch(orderOperation, true);
     }
 
