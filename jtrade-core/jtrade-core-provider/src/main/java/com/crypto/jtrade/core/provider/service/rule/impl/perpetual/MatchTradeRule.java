@@ -3,34 +3,21 @@ package com.crypto.jtrade.core.provider.service.rule.impl.perpetual;
 import java.math.BigDecimal;
 import java.util.Collections;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.crypto.jtrade.common.constants.*;
+import com.crypto.jtrade.common.model.*;
+import com.crypto.jtrade.common.util.BigDecimalUtil;
 import com.crypto.jtrade.core.provider.model.convert.BeanMapping;
+import com.crypto.jtrade.core.provider.model.landing.OrderCanceledLanding;
+import com.crypto.jtrade.core.provider.model.landing.OrderMatchedLanding;
+import com.crypto.jtrade.core.provider.model.session.TradeSession;
 import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
 import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
 import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
 import com.crypto.jtrade.core.provider.service.publish.PrivatePublish;
 import com.crypto.jtrade.core.provider.service.rule.impl.AbstractTradeRule;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.crypto.jtrade.common.constants.BillType;
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.DataAction;
-import com.crypto.jtrade.common.constants.MarginType;
-import com.crypto.jtrade.common.constants.MatchRole;
-import com.crypto.jtrade.common.constants.OrderSide;
-import com.crypto.jtrade.common.constants.OrderStatus;
-import com.crypto.jtrade.common.constants.TradeType;
-import com.crypto.jtrade.common.model.AssetBalance;
-import com.crypto.jtrade.common.model.Bill;
-import com.crypto.jtrade.common.model.ComplexEntity;
-import com.crypto.jtrade.common.model.Order;
-import com.crypto.jtrade.common.model.Position;
-import com.crypto.jtrade.common.model.SymbolInfo;
-import com.crypto.jtrade.common.model.Trade;
-import com.crypto.jtrade.common.util.BigDecimalUtil;
-import com.crypto.jtrade.core.provider.model.landing.OrderCanceledLanding;
-import com.crypto.jtrade.core.provider.model.landing.OrderMatchedLanding;
-import com.crypto.jtrade.core.provider.model.session.TradeSession;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -393,8 +380,11 @@ public class MatchTradeRule extends AbstractTradeRule {
                 session.getAssetBalance().getAsset(), session.getTrade().getCloseProfit(), null);
         }
         // fee bill
-        Bill feeBill = Bill.createBill(order.getClientId(), order.getSymbol(), BillType.COMMISSION,
-            session.getTrade().getFeeAsset(), session.getTrade().getFee().negate(), null);
+        Bill feeBill = null;
+        if (session.getTrade().getFee().compareTo(BigDecimal.ZERO) != 0) {
+            feeBill = Bill.createBill(order.getClientId(), order.getSymbol(), BillType.COMMISSION,
+                session.getTrade().getFeeAsset(), session.getTrade().getFee().negate(), null);
+        }
 
         Order cpOrder = orderAction == DataAction.DELETE ? order : beanMapping.clone(order);
         Position cpPosition = positionAction == DataAction.DELETE ? position : beanMapping.clone(position);

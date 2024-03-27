@@ -88,7 +88,7 @@ jtrade:
     force-interval-milli-seconds: 5000
     force-max-size-kb: 100
   liquidation:
-    enabled: false
+    enabled: true
     calculate-interval-seconds: 5
     delay-intervals: 2
   deduct:

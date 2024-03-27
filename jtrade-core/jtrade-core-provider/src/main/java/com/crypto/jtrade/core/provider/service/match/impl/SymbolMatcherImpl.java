@@ -507,7 +507,9 @@ public class SymbolMatcherImpl implements SymbolMatcher {
         if (landing.getProfitBill() != null) {
             billList.add(landing.getProfitBill());
         }
-        billList.add(landing.getFeeBill());
+        if (landing.getFeeBill() != null) {
+            billList.add(landing.getFeeBill());
+        }
         return new ComplexEntity(landing.getOrder(), Collections.singletonList(landing.getBalance()),
             landing.getPosition(), landing.getTrade(), billList);
     }

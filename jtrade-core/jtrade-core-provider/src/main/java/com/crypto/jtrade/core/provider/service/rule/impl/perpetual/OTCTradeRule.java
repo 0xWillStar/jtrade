@@ -5,20 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
-import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
-import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
-import com.crypto.jtrade.core.provider.service.publish.PrivatePublish;
-import com.crypto.jtrade.core.provider.service.rule.impl.AbstractTradeRule;
-import com.crypto.jtrade.core.provider.util.SequenceHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.crypto.jtrade.common.constants.Constants;
-import com.crypto.jtrade.common.constants.OrderSide;
-import com.crypto.jtrade.common.constants.OrderStatus;
-import com.crypto.jtrade.common.constants.OrderType;
-import com.crypto.jtrade.common.constants.PositionSide;
+import com.crypto.jtrade.common.constants.*;
 import com.crypto.jtrade.common.model.Bill;
 import com.crypto.jtrade.common.model.ComplexEntity;
 import com.crypto.jtrade.common.model.Order;
@@ -26,6 +16,12 @@ import com.crypto.jtrade.core.api.model.OTCRequest;
 import com.crypto.jtrade.core.provider.model.landing.MatchedLandings;
 import com.crypto.jtrade.core.provider.model.landing.OrderMatchedLanding;
 import com.crypto.jtrade.core.provider.model.session.TradeSession;
+import com.crypto.jtrade.core.provider.service.cache.LocalCacheService;
+import com.crypto.jtrade.core.provider.service.landing.MySqlLanding;
+import com.crypto.jtrade.core.provider.service.landing.RedisLanding;
+import com.crypto.jtrade.core.provider.service.publish.PrivatePublish;
+import com.crypto.jtrade.core.provider.service.rule.impl.AbstractTradeRule;
+import com.crypto.jtrade.core.provider.util.SequenceHelper;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -104,21 +100,8 @@ public class OTCTradeRule extends AbstractTradeRule {
             /**
              * private publish
              */
-            List<Bill> buyBillList = new ArrayList<>();
-            buyBillList.add(buyLanding.getProfitBill());
-            buyBillList.add(buyLanding.getFeeBill());
-            ComplexEntity buyComplexEntity =
-                new ComplexEntity(buyLanding.getOrder(), Collections.singletonList(buyLanding.getBalance()),
-                    buyLanding.getPosition(), buyLanding.getTrade(), buyBillList);
-            privatePublish.publishComplex(buyComplexEntity);
-
-            List<Bill> sellBillList = new ArrayList<>();
-            sellBillList.add(sellLanding.getProfitBill());
-            sellBillList.add(sellLanding.getFeeBill());
-            ComplexEntity sellComplexEntity =
-                new ComplexEntity(sellLanding.getOrder(), Collections.singletonList(sellLanding.getBalance()),
-                    sellLanding.getPosition(), sellLanding.getTrade(), sellBillList);
-            privatePublish.publishComplex(sellComplexEntity);
+            privatePublish.publishComplex(buildComplexEntity(buyLanding));
+            privatePublish.publishComplex(buildComplexEntity(sellLanding));
         }
     }
 
@@ -138,6 +121,21 @@ public class OTCTradeRule extends AbstractTradeRule {
         order.setType(OrderType.LIMIT);
         order.setStatus(OrderStatus.FILLED);
         return order;
+    }
+
+    /**
+     * build ComplexEntity
+     */
+    private ComplexEntity buildComplexEntity(OrderMatchedLanding landing) {
+        List<Bill> billList = new ArrayList<>();
+        if (landing.getProfitBill() != null) {
+            billList.add(landing.getProfitBill());
+        }
+        if (landing.getFeeBill() != null) {
+            billList.add(landing.getFeeBill());
+        }
+        return new ComplexEntity(landing.getOrder(), Collections.singletonList(landing.getBalance()),
+            landing.getPosition(), landing.getTrade(), billList);
     }
 
 }

@@ -475,9 +475,11 @@ public class MySqlLandingImpl extends BatchingService implements MySqlLanding {
             addToBatch(profitOperation, false);
         }
         // fee
-        MySqlOperation feeOperation =
-            new MySqlOperation(clientId, DataObject.BILL, DataAction.INSERT, landing.getFeeBill().toString());
-        addToBatch(feeOperation, false);
+        if (landing.getFeeBill() != null) {
+            MySqlOperation feeOperation =
+                new MySqlOperation(clientId, DataObject.BILL, DataAction.INSERT, landing.getFeeBill().toString());
+            addToBatch(feeOperation, false);
+        }
     }
 
     /**
